@@ -1,11 +1,12 @@
 /* eslint-disable */
-// Eleven hidden architectural jewels of Basel, projected onto the eleven
-// houses of the Biel hamlet in Lötschental (canton Valais), accessed by
-// the Weritzalpstrasse.
+// Elf versteckte architektonische Juwelen Basels, projiziert auf die elf
+// Häuser des Weilers Biel im Lötschental (Kanton Wallis), erschlossen
+// durch die Weritzalpstrasse.
 //
-// Coordinates below were placed in the field with the in-app edit mode:
-// each marker dragged onto its matching house, then exported via
-// "Copy coordinates". Centroid sits at roughly 46.41750° N, 7.78467° E.
+// Die untenstehenden Koordinaten wurden vor Ort mit dem Edit-Modus der
+// App platziert: jeder Marker auf das zugehörige Haus gezogen und über
+// "Koordinaten kopieren" exportiert. Der Schwerpunkt liegt bei rund
+// 46.41750° N, 7.78467° E.
 
 window.BUILDINGS = [
   {
@@ -20,12 +21,14 @@ window.BUILDINGS = [
     illustration: "watertower",
     palette: ["#d9c9a8", "#8a6f44", "#3a2e22"],
     text:
-      "A delicate hexagonal water tower hidden in the leafy Bruderholz plateau. " +
-      "Hans Bernoulli — better known as a garden-city theorist — gives the utility " +
-      "structure a classical demeanour: a slim rusticated base, a fluted shaft of " +
-      "exposed concrete and a copper lantern that has weathered to verdigris. " +
-      "The tower quietly mediates between civic monument and engineering " +
-      "object — an early Swiss reading of New Objectivity in soft sandstone tones."
+      "Ein zarter sechseckiger Wasserturm, versteckt auf dem begrünten " +
+      "Bruderholz-Plateau. Hans Bernoulli — eher bekannt als Theoretiker " +
+      "der Gartenstadt — verleiht dem Zweckbau eine klassische Anmutung: " +
+      "ein schlanker rustifizierter Sockel, ein gerillter Schaft aus " +
+      "Sichtbeton und eine Kupferlaterne, die zu Grünspan verwittert ist. " +
+      "Der Turm vermittelt still zwischen bürgerlichem Monument und " +
+      "Ingenieurbau — eine frühe Schweizer Lesart der Neuen Sachlichkeit " +
+      "in sanften Sandsteintönen."
   },
   {
     id: 2,
@@ -39,12 +42,14 @@ window.BUILDINGS = [
     illustration: "antonius",
     palette: ["#9c9388", "#5a5247", "#2f2a23"],
     text:
-      "The first fully reinforced-concrete church in Switzerland, and one of the " +
-      "decisive buildings of European modern sacred architecture. Moser left the " +
-      "concrete board-marked and pigment-grey, then opened a vast rose window of " +
-      "Otto Staiger's stained glass into the west façade. From the outside the " +
-      "block reads as a quiet basilica; inside, the nave rises like a stone forest, " +
-      "uncompromisingly raw. A pilgrimage for any architect."
+      "Die erste vollständig in Stahlbeton errichtete Kirche der Schweiz " +
+      "und eines der entscheidenden Bauwerke der europäischen modernen " +
+      "Sakralarchitektur. Moser liess den Beton bretterrau und " +
+      "pigmentgrau und öffnete eine grosse Fensterrose mit der " +
+      "Glasmalerei Otto Staigers in die Westfassade. Von aussen wirkt " +
+      "der Bau wie eine stille Basilika; im Inneren erhebt sich das " +
+      "Schiff wie ein steinerner Wald — kompromisslos roh. Eine " +
+      "Pilgerstätte für jede Architektin und jeden Architekten."
   },
   {
     id: 3,
@@ -58,12 +63,13 @@ window.BUILDINGS = [
     illustration: "lukas",
     palette: ["#ddd2bb", "#7c6b51", "#352c23"],
     text:
-      "Egender brings Bauhaus restraint into the Protestant parish church. A free-" +
-      "standing campanile is detached from the prismatic worship hall; the corner " +
-      "windows pour daylight across a white-rendered interior. Built during the " +
-      "depression years, the church reads almost as a ship — long, low, and aimed " +
-      "at the western light. Community spaces interlock seamlessly around a " +
-      "single, almost monastic, central axis."
+      "Egender bringt Bauhaus-Zurückhaltung in die protestantische " +
+      "Pfarrkirche. Ein freistehender Campanile setzt sich vom " +
+      "prismatischen Kirchenraum ab; die Eckfenster lassen Tageslicht " +
+      "über das weiss verputzte Innere fluten. In den Krisenjahren " +
+      "erbaut, wirkt die Kirche fast wie ein Schiff — lang, niedrig, " +
+      "auf das westliche Licht gerichtet. Gemeindebereiche fügen sich " +
+      "nahtlos um eine einzige, beinahe monastische Mittelachse."
   },
   {
     id: 4,
@@ -77,11 +83,13 @@ window.BUILDINGS = [
     illustration: "volta",
     palette: ["#c9b88b", "#7d6a3f", "#3a2f1e"],
     text:
-      "Hidden behind the busy Wasgenring is a tight courtyard school in deep ochre " +
-      "render — a contemporary reinterpretation of the Basel school typology. The " +
-      "plan presses classrooms tightly around a generous hall lit from above, " +
-      "rejecting the open-plan fashions of the day. Miller & Maranta argue, with " +
-      "this building, that pedagogy and load-bearing masonry can still be allies."
+      "Hinter dem geschäftigen Wasgenring verbirgt sich ein kompaktes " +
+      "Hofschulhaus mit tief ockerfarbenem Verputz — eine zeitgenössische " +
+      "Neuinterpretation der Basler Schultypologie. Der Grundriss " +
+      "drängt die Klassenzimmer eng um eine grosszügige, von oben " +
+      "belichtete Halle und lehnt damit die Grossraummoden der Zeit ab. " +
+      "Miller & Maranta zeigen mit diesem Bau, dass Pädagogik und " +
+      "tragendes Mauerwerk noch immer Verbündete sein können."
   },
   {
     id: 5,
@@ -95,11 +103,13 @@ window.BUILDINGS = [
     illustration: "davidsboden",
     palette: ["#e3d4b7", "#a98a5d", "#3d3225"],
     text:
-      "An early manifesto of Basel's so-called 'Analoge' architecture: anonymous, " +
-      "calm, almost wilfully reticent. Roger Diener stacks 88 flats into a sober " +
-      "perimeter block that finishes the urban grid as if it had always been there. " +
-      "The façade rhythm — punched windows, no decoration, soft cement render — " +
-      "would influence a generation of Swiss housing."
+      "Ein frühes Manifest der sogenannten 'Analogen' Architektur Basels: " +
+      "anonym, ruhig, fast bewusst zurückhaltend. Roger Diener stapelt " +
+      "88 Wohnungen zu einem nüchternen Blockrand, der das Stadtgefüge " +
+      "so vervollständigt, als wäre er schon immer da gewesen. Der " +
+      "Rhythmus der Fassade — Lochfenster, kein Schmuck, sanfter " +
+      "Zementputz — sollte eine ganze Generation des Schweizer " +
+      "Wohnungsbaus prägen."
   },
   {
     id: 6,
@@ -113,11 +123,13 @@ window.BUILDINGS = [
     illustration: "schudel",
     palette: ["#cfc1a3", "#8a7549", "#332a1d"],
     text:
-      "Built before Meyer's Bauhaus directorship, this small family villa is the " +
-      "rough draft of his radical functionalism. Flat roof, ribbon window, exposed " +
-      "concrete lintel — almost shocking in mid-1920s Basel. There is a real " +
-      "tension between the sloped garden and the relentlessly horizontal house. " +
-      "It still feels like an argument rather than a home."
+      "Vor Meyers Bauhaus-Direktorat erbaut, ist diese kleine " +
+      "Familienvilla der Rohentwurf seines radikalen Funktionalismus. " +
+      "Flachdach, Bandfenster, sichtbarer Betonsturz — beinahe " +
+      "schockierend im Basel der mittleren 1920er-Jahre. Eine spürbare " +
+      "Spannung herrscht zwischen dem geneigten Garten und dem " +
+      "unerbittlich horizontalen Haus. Es wirkt noch immer eher wie ein " +
+      "Argument als wie ein Zuhause."
   },
   {
     id: 7,
@@ -131,11 +143,13 @@ window.BUILDINGS = [
     illustration: "pavillon",
     palette: ["#b7a47a", "#6e5b34", "#2d2418"],
     text:
-      "A miniature post-war pavilion that nobody photographs. Folded-plate concrete " +
-      "roof, fully glazed elevations, terrazzo floor. Originally a tram waiting " +
-      "hall, now a neighbourhood café. The roof's V-shaped wings cantilever almost " +
-      "five metres without a single visible beam — a small structural showpiece, " +
-      "achieved before computer calculation was common."
+      "Ein winziger Nachkriegspavillon, den niemand fotografiert. " +
+      "Faltwerkdach aus Beton, vollständig verglaste Fronten, " +
+      "Terrazzoboden. Ursprünglich eine Tramwartehalle, heute ein " +
+      "Quartiercafé. Die V-förmigen Dachflügel kragen fast fünf Meter " +
+      "aus, ohne einen einzigen sichtbaren Träger — ein kleines " +
+      "Tragwerks-Bravourstück, vollbracht bevor Computerberechnungen " +
+      "üblich waren."
   },
   {
     id: 8,
@@ -149,11 +163,12 @@ window.BUILDINGS = [
     illustration: "hechtliacker",
     palette: ["#d9c7a0", "#9c7e4a", "#3a2e1c"],
     text:
-      "A late-modern housing estate that bends and steps to follow the hillside. " +
-      "The architects refuse a single dominant elevation — instead, dozens of " +
-      "small loggias punctuate the brick volumes. From the inside, every flat has " +
-      "a private corner of sky. Arguably the most humane large housing " +
-      "project of 1970s Basel and a quiet rebuke to the slab block."
+      "Eine spätmoderne Wohnsiedlung, die sich biegend und stufend dem " +
+      "Hang anpasst. Die Architekten verweigern eine einzige dominante " +
+      "Schauseite — stattdessen punktieren Dutzende kleiner Loggien die " +
+      "Backsteinvolumen. Von innen hat jede Wohnung ihre eigene Ecke " +
+      "Himmel. Wohl das menschenfreundlichste Grosswohnprojekt des " +
+      "Basels der 1970er-Jahre und ein leiser Tadel an den Plattenbau."
   },
   {
     id: 9,
@@ -167,11 +182,12 @@ window.BUILDINGS = [
     illustration: "schwarzpark",
     palette: ["#a89878", "#62543a", "#2c241a"],
     text:
-      "A single residential block standing alone in a public park — a Swiss " +
-      "version of Le Corbusier's Pavillon Suisse, in dark pigmented concrete. " +
-      "Each flat occupies a full storey with windows on three sides. The shadow " +
-      "of nearby chestnut trees plays across the rough board-marked walls all " +
-      "afternoon. Quiet, severe, and deeply considered."
+      "Ein einzelner Wohnblock, allein in einem öffentlichen Park — eine " +
+      "Schweizer Lesart von Le Corbusiers Pavillon Suisse, aus dunkel " +
+      "pigmentiertem Beton. Jede Wohnung belegt ein ganzes Geschoss mit " +
+      "Fenstern auf drei Seiten. Den ganzen Nachmittag wandert der " +
+      "Schatten naher Kastanien über die rauen, bretterrauen Wände. " +
+      "Still, streng und tief durchdacht."
   },
   {
     id: 10,
@@ -185,11 +201,12 @@ window.BUILDINGS = [
     illustration: "buvette",
     palette: ["#bca982", "#6a5635", "#2a2117"],
     text:
-      "At the very tip of Switzerland, where Rhine meets France and Germany, a tiny " +
-      "concrete kiosk pretends to be a piece of harbour infrastructure. Heavy " +
-      "shutters fold up to become awnings; closed, the building is a sealed bunker. " +
-      "Buchner Bründler turn a 30-square-metre programme into a meditation on the " +
-      "border itself."
+      "An der äussersten Spitze der Schweiz, wo der Rhein auf Frankreich " +
+      "und Deutschland trifft, tarnt sich ein winziger Betonkiosk als " +
+      "Stück Hafeninfrastruktur. Schwere Klappläden öffnen sich nach " +
+      "oben zu Markisen; geschlossen ist der Bau ein versiegelter " +
+      "Bunker. Buchner Bründler machen aus einem 30-Quadratmeter-" +
+      "Programm eine Meditation über die Grenze selbst."
   },
   {
     id: 11,
@@ -203,11 +220,12 @@ window.BUILDINGS = [
     illustration: "brunngaesslein",
     palette: ["#cbb98a", "#7d6839", "#332919"],
     text:
-      "Hermann Baur's small townhouse slips between two older neighbours with " +
-      "complete tact. A grid of timber windows, a slate roof, a single sculpted " +
-      "concrete balcony — nothing more. Inside, however, the section reveals " +
-      "split-levels, a double-height living room and a roof terrace that catches " +
-      "the southern light. Widely held to be the finest post-war infill in " +
-      "the Altstadt."
+      "Hermann Baurs kleines Stadthaus schiebt sich mit grosser " +
+      "Behutsamkeit zwischen zwei ältere Nachbarn. Ein Raster aus " +
+      "Holzfenstern, ein Schieferdach, ein einzelner skulptural " +
+      "geformter Betonbalkon — mehr nicht. Im Inneren jedoch offenbart " +
+      "der Schnitt Splitlevel, einen doppelgeschossigen Wohnraum und " +
+      "eine Dachterrasse, die das südliche Licht einfängt. Gilt als die " +
+      "schönste Nachkriegsergänzung in der Basler Altstadt."
   }
 ];
