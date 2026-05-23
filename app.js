@@ -5,6 +5,7 @@
   const DISCOVERY_RADIUS_M = 30;
   const HAMLET_CENTER = [46.41349, 7.87248];
   const ANCHOR_KEY = "anchorOffset";
+  const OVERRIDES_KEY = "manualOverrides";
 
   const state = {
     position: null,
@@ -17,7 +18,8 @@
     userMarker: null,
     userCircle: null,
     demo: { active: false, raf: null, t0: 0, route: [] },
-    manual: false
+    manual: false,
+    editing: false
   };
 
   // ─── Anchor offset ───────────────────────────────────────
@@ -65,6 +67,36 @@
     for (const b of BUILDINGS) { b.lat = b._origLat; b.lon = b._origLon; }
   }
 
+  // ─── Per-building overrides ──────────────────────────────
+  // Edit mode lets the user drag each marker individually onto its real
+  // house. These per-id overrides take precedence over the anchor offset.
+  function loadOverrides() {
+    try {
+      const raw = localStorage.getItem(OVERRIDES_KEY);
+      if (!raw) return {};
+      const o = JSON.parse(raw);
+      return (o && typeof o === "object") ? o : {};
+    } catch { return {}; }
+  }
+  function saveOverride(id, lat, lon) {
+    const o = loadOverrides();
+    o[id] = { lat, lon };
+    localStorage.setItem(OVERRIDES_KEY, JSON.stringify(o));
+  }
+  function clearOverrides() {
+    localStorage.removeItem(OVERRIDES_KEY);
+  }
+  function applyOverrides() {
+    const o = loadOverrides();
+    for (const b of BUILDINGS) {
+      const ov = o[b.id];
+      if (ov && typeof ov.lat === "number" && typeof ov.lon === "number") {
+        b.lat = ov.lat;
+        b.lon = ov.lon;
+      }
+    }
+  }
+
   // ─── DOM ─────────────────────────────────────────────────
   const $ = (id) => document.getElementById(id);
   const statusEl = $("status");
@@ -79,8 +111,11 @@
   const demoWalkBtn = $("demoWalk");
   const anchorBtn = $("anchorHere");
   const resetAnchorBtn = $("resetAnchor");
+  const editPositionsBtn = $("editPositions");
+  const copyCoordsBtn = $("copyCoords");
   const coordsEl = $("coords");
   const locationHint = $("locationHint");
+  const mapPanel = document.querySelector(".map-panel");
   const discoveredCount = $("discoveredCount");
   const totalCount = $("totalCount");
   const cardsEl = $("cards");
@@ -368,9 +403,18 @@
         iconSize: [34, 34],
         iconAnchor: [17, 17]
       });
-      const m = L.marker([b.lat, b.lon], { icon })
+      const m = L.marker([b.lat, b.lon], { icon, draggable: false, autoPan: true })
         .addTo(state.map)
-        .on("click", () => openModal(b));
+        .on("click", () => { if (!state.editing) openModal(b); })
+        .on("dragend", (e) => {
+          const ll = e.target.getLatLng();
+          b.lat = ll.lat;
+          b.lon = ll.lng;
+          saveOverride(b.id, ll.lat, ll.lng);
+          // Keep the dashed editing style on the dropped marker
+          const el = e.target.getElement()?.querySelector(".building-marker");
+          if (el && state.editing) el.classList.add("editing");
+        });
       state.markers.set(b.id, m);
     });
 
@@ -620,6 +664,73 @@
     });
   }
 
+  // ─── Edit mode (draggable markers) ──────────────────────
+  function setEditing(on) {
+    state.editing = on;
+    if (mapPanel) mapPanel.classList.toggle("edit-mode", on);
+    editPositionsBtn.classList.toggle("editing-active", on);
+    editPositionsBtn.textContent = on ? "Done editing" : "Edit positions";
+
+    state.markers.forEach((marker, id) => {
+      if (marker.dragging) {
+        if (on) marker.dragging.enable();
+        else marker.dragging.disable();
+      }
+      const el = marker.getElement()?.querySelector(".building-marker");
+      if (el) el.classList.toggle("editing", on);
+    });
+
+    if (on) {
+      showHint(
+        "Drag each numbered marker onto its matching house. Drops are saved " +
+        "automatically. Tap <strong>Copy coordinates</strong> when finished.",
+        false
+      );
+    } else {
+      hideHint();
+    }
+  }
+
+  editPositionsBtn.addEventListener("click", () => setEditing(!state.editing));
+
+  copyCoordsBtn.addEventListener("click", async () => {
+    const lines = BUILDINGS.map((b) =>
+      `${String(b.id).padStart(2, "0")}  ${b.lat.toFixed(6)}, ${b.lon.toFixed(6)}  — ${b.name}`
+    );
+    const jsBlock = BUILDINGS.map((b) =>
+      `  { id: ${b.id}, lat: ${b.lat.toFixed(6)}, lon: ${b.lon.toFixed(6)} }, // ${b.name}`
+    ).join("\n");
+    const text =
+      "// Eleven buildings — manually placed coordinates\n" +
+      jsBlock + "\n\n" +
+      "// Plain list:\n" + lines.map((l) => "// " + l).join("\n");
+
+    let ok = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      }
+    } catch { /* fall through */ }
+    if (!ok) {
+      // Fallback: textarea + execCommand
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { ok = document.execCommand("copy"); } catch { /* ignore */ }
+      document.body.removeChild(ta);
+    }
+    showHint(
+      ok
+        ? "Copied 11 coordinates to clipboard. Paste them anywhere — they include both a JS block and a plain list."
+        : "Could not copy automatically. Open the browser console and run <code>copy(BUILDINGS.map(b=>[b.id,b.lat,b.lon]))</code>.",
+      !ok
+    );
+  });
+
   anchorBtn.disabled = true;
   anchorBtn.addEventListener("click", () => {
     if (!state.position) {
@@ -776,6 +887,7 @@
   function boot() {
     rememberOriginalCoords();
     applyAnchorOffset();
+    applyOverrides();
     if (loadAnchorOffset()) resetAnchorBtn.hidden = false;
     renderCards();
     initMap();
