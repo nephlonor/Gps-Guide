@@ -3,123 +3,177 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f0f0f" />
-  <title>Architekturführer Basel — Hidden Gems</title>
+  <meta name="theme-color" content="#c5dcd6" />
+  <title>Architekturführer Basel — City Guide</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark">AB</div>
-      <div class="brand-text">
-        <h1>Architekturführer Basel</h1>
-        <p>Eleven hidden gems — a guided walk</p>
-      </div>
+    <div class="topbar-side">
+      <button class="icon-btn" aria-label="Back" type="button">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <h1 class="brand-title">City Guide</h1>
     </div>
-    <div class="status" id="status">
-      <span class="status-dot" id="statusDot"></span>
-      <span id="statusText">Locating…</span>
+    <div class="topbar-side">
+      <div class="avatar" aria-hidden="true">AB</div>
+      <button class="icon-btn" id="menuBtn" aria-label="More" type="button">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      </button>
     </div>
   </header>
 
-  <main class="layout">
-    <section class="compass-panel" aria-label="Navigation">
-      <div class="compass-card">
-        <div class="compass-header">
-          <span class="label">Nearest building</span>
-          <span class="distance" id="distanceValue">— m</span>
-        </div>
-        <div class="compass-stage">
-          <div class="compass-ring">
-            <div class="compass-tick n">N</div>
-            <div class="compass-tick e">E</div>
-            <div class="compass-tick s">S</div>
-            <div class="compass-tick w">W</div>
-            <svg class="compass-arrow" id="compassArrow" viewBox="0 0 100 100" aria-hidden="true">
-              <defs>
-                <linearGradient id="arrowGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#ff6a3d" />
-                  <stop offset="100%" stop-color="#c0392b" />
-                </linearGradient>
-              </defs>
-              <polygon points="50,8 62,58 50,50 38,58" fill="url(#arrowGrad)" />
-              <circle cx="50" cy="50" r="4" fill="#0f0f0f" />
-              <polygon points="50,92 56,58 50,62 44,58" fill="#2a2a2a" opacity="0.6" />
-            </svg>
-          </div>
-        </div>
-        <div class="compass-target">
-          <span class="target-num" id="targetNum">—</span>
-          <div class="target-info">
-            <strong id="targetName">Searching…</strong>
-            <span id="targetMeta">Allow location to begin</span>
-          </div>
-        </div>
-        <button class="ghost-btn" id="enableLocation" type="button">Enable location</button>
-        <div class="btn-row">
-          <button class="ghost-btn subtle" id="anchorHere" type="button">Anchor 11 buildings here</button>
-          <button class="ghost-btn subtle icon-only" id="resetAnchor" type="button" hidden title="Reset anchor">↺</button>
-        </div>
-        <div class="btn-row">
-          <button class="ghost-btn subtle" id="editPositions" type="button">Edit positions</button>
-          <button class="ghost-btn subtle" id="copyCoords" type="button">Copy coordinates</button>
-        </div>
-        <button class="ghost-btn subtle" id="demoWalk" type="button">Start demo walk</button>
-        <button class="ghost-btn subtle" id="enableCompass" type="button" hidden>Enable compass</button>
-        <p class="coords" id="coords" hidden></p>
-        <p class="hint" id="locationHint" hidden></p>
-      </div>
+  <div class="closest" id="closestPill">
+    <span class="closest-icon" aria-hidden="true">
+      <svg id="compassArrow" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3 L17 18 L12 15 L7 18 Z" fill="currentColor"/>
+      </svg>
+    </span>
+    <span><span class="closest-prefix">Closest:</span> <strong id="closestName">Allow location to begin</strong></span>
+    <span class="closest-dist" id="closestDist">—</span>
+  </div>
 
-      <div class="legend">
-        <p class="legend-title">How it works</p>
-        <ol>
-          <li>Allow location — the compass points to the closest jewel.</li>
-          <li>Walk within <strong>30 m</strong> of any building to unlock its story.</li>
-          <li>No GPS? Use <strong>Start demo walk</strong>, or <strong>long-press the map</strong> to drop a position.</li>
-        </ol>
-        <p class="legend-credit">An <em>Architekturführer Basel</em>, projected onto the eleven houses of Bieli (Lötschental) along the Weritzalpstrasse.</p>
+  <main class="shell">
+    <section class="hero">
+      <div class="map-frame">
+        <div id="map"></div>
+        <div class="map-overlay"><strong id="discoveredCount">0</strong>/<span id="totalCount">11</span> discovered</div>
+        <div class="fab-row">
+          <button class="fab primary" id="enableLocation" type="button">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            <span id="enableLocationLabel">Enable location</span>
+          </button>
+          <button class="fab" id="enableCompass" type="button" hidden>Compass</button>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <div>
+          <p class="location-label">Current Location</p>
+          <h2 class="location-name">Biel, Lötschental</h2>
+        </div>
       </div>
     </section>
 
-    <section class="map-panel" aria-label="Map">
-      <div id="map"></div>
-      <div class="map-overlay">
-        <span id="discoveredCount">0</span> of <span id="totalCount">11</span> discovered
+    <section class="stats" aria-label="Stats">
+      <div class="stat-card">
+        <span class="stat-num" id="statDiscovered">0</span>
+        <span class="stat-label"><strong>Buildings</strong>discovered</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">11</span>
+        <span class="stat-label"><strong>Hidden gems</strong>along Weritzalpstrasse</span>
       </div>
     </section>
-  </main>
 
-  <section class="catalogue" id="catalogue" aria-label="Buildings">
-    <div class="catalogue-head">
-      <h2>The eleven jewels</h2>
-      <p>Tap a card on the map to preview. Full descriptions unlock at 30 m.</p>
+    <div class="style-row" role="tablist" aria-label="Style filter">
+      <button class="style-pill active" data-filter="all" role="tab">All</button>
+      <button class="style-pill" data-filter="modernism" role="tab">Modernism</button>
+      <button class="style-pill" data-filter="bauhaus" role="tab">Bauhaus</button>
+      <button class="style-pill" data-filter="post-war" role="tab">Post-war</button>
+      <button class="style-pill" data-filter="contemporary" role="tab">Contemporary</button>
+      <button class="style-pill" data-filter="sacred" role="tab">Sacred</button>
+    </div>
+
+    <div class="section-head">
+      <h2>Nearby Buildings</h2>
+      <span class="count" id="visibleCount">11 of 11</span>
     </div>
     <div class="cards" id="cards"></div>
-  </section>
 
-  <!-- Discovery modal -->
+    <p class="hint" id="locationHint" hidden></p>
+  </main>
+
+  <footer class="footer">
+    Designed for the eleven houses of Bieli (Lötschental) — eleven hidden masterpieces of Basel architecture, re-projected onto a Walliser hamlet.
+  </footer>
+
+  <!-- Discovery / detail sheet -->
   <div class="modal" id="modal" hidden>
     <div class="modal-backdrop" data-close></div>
-    <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <button class="modal-close" data-close aria-label="Close">×</button>
-      <div class="modal-figure" id="modalFigure"></div>
-      <div class="modal-body">
-        <span class="modal-tag" id="modalTag">No. — · Year</span>
-        <h3 id="modalTitle">Title</h3>
-        <p class="modal-arch" id="modalArch">Architect</p>
-        <p class="modal-text" id="modalText">Description.</p>
-        <p class="modal-foot" id="modalFoot">Address</p>
+    <article class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header class="modal-header">
+        <button class="icon-btn" data-close aria-label="Back" type="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h3 id="modalTitle">—</h3>
+        <div class="avatar" aria-hidden="true">AB</div>
+      </header>
+      <div class="modal-scroll">
+        <div class="modal-figure" id="modalFigure"></div>
+        <div class="fact-row">
+          <div class="fact">
+            <p class="fact-label">Built</p>
+            <p class="fact-value" id="modalYear">—</p>
+          </div>
+          <div class="fact">
+            <p class="fact-label">Architect</p>
+            <p class="fact-value" id="modalArch">—</p>
+          </div>
+          <div class="fact">
+            <p class="fact-label">Style</p>
+            <p class="fact-value" id="modalStyle">—</p>
+          </div>
+        </div>
+        <div class="info-card lilac">
+          <span class="info-icon" aria-hidden="true">i</span>
+          <div class="info-body">
+            <p class="info-title">About</p>
+            <p class="info-text" id="modalAbout">—</p>
+          </div>
+        </div>
+        <div class="info-card purple" id="modalDetailCard">
+          <span class="info-icon" aria-hidden="true">★</span>
+          <div class="info-body">
+            <p class="info-title">Hidden detail</p>
+            <p class="info-text" id="modalDetail">—</p>
+          </div>
+        </div>
+        <div class="info-card yellow">
+          <span class="info-icon" aria-hidden="true">📍</span>
+          <div class="info-body">
+            <p class="info-title">Address</p>
+            <p class="info-text" id="modalAddress">—</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-cta">
+        <button class="cta-btn muted" data-close type="button">Close</button>
+        <button class="cta-btn" id="modalCenter" type="button">Show on map</button>
       </div>
     </article>
   </div>
 
-  <footer class="footer">
-    <p>Designed for the hamlet of Bieli, Lötschental — re-projecting Basel's quiet masterpieces onto a Walliser village.</p>
-  </footer>
+  <!-- Overflow menu (••• in topbar) -->
+  <div class="menu-sheet" id="menuSheet" hidden>
+    <div class="modal-backdrop" data-menu-close></div>
+    <div class="menu-card" role="dialog" aria-modal="true" aria-label="Options">
+      <div class="menu-grip"></div>
+      <h4>Options</h4>
+      <div class="menu-row">
+        <span>Compass sensor</span>
+        <button id="menuEnableCompass" type="button">Enable</button>
+      </div>
+      <div class="menu-row">
+        <span>Re-centre 11 buildings to here</span>
+        <button id="menuAnchor" type="button">Anchor here</button>
+      </div>
+      <div class="menu-row" id="menuResetRow" hidden>
+        <span>Clear custom anchor</span>
+        <button id="menuResetAnchor" type="button">Reset</button>
+      </div>
+      <div class="menu-row">
+        <span>Live GPS</span>
+        <code id="menuCoords">—</code>
+      </div>
+      <div class="menu-row">
+        <button class="primary" data-menu-close type="button" style="width:100%;">Done</button>
+      </div>
+    </div>
+  </div>
 
   <script src="vendor/leaflet/leaflet.js"></script>
   <script src="data.js"></script>
