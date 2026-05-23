@@ -500,7 +500,7 @@ button { font-family: inherit; }
 .modal {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: 1500;
   display: grid;
   place-items: end center;
   padding: 0;
@@ -678,9 +678,10 @@ button { font-family: inherit; }
   align-items: center;
   gap: 10px;
   box-shadow: var(--shadow-lg);
-  z-index: 150;
+  z-index: 1800;
   opacity: 0;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.3s ease;
   font-size: 13.5px;
   max-width: 90vw;
@@ -705,7 +706,7 @@ button { font-family: inherit; }
 .menu-sheet {
   position: fixed;
   inset: 0;
-  z-index: 180;
+  z-index: 1400;
   display: grid;
   place-items: end center;
   padding: 0;
