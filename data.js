@@ -1,13 +1,14 @@
 /* eslint-disable */
 // Eleven hidden architectural jewels of Basel, projected onto the eleven
-// houses of the Bieli hamlet in Lötschental (canton Valais). The markers
-// follow the Weritzalpstrasse, the small lane that climbs north-west out of
-// the valley floor up toward Weritzalp; the road meanders slightly so the
-// houses sit on alternating sides.
+// houses of the Biel hamlet in Lötschental (canton Valais), accessed by
+// the Weritzalpstrasse. The default coordinates below place the markers
+// inside the ~60 m hamlet polygon labelled "Biel" on OSM.
 //
-// Hamlet centre used by the map: 46.40880° N, 7.87400° E
-// Buildings sit within a ~100 m corridor along the road so the 30 m
-// discovery radius is meaningful for walking.
+// These coordinates are a visual estimate. Use the "Anchor 11 buildings
+// here" button in the app to re-centre them around your live GPS
+// position — the offset is stored in localStorage and applied on every
+// load, so the eleven buildings can be lined up with the real houses
+// without a code change.
 
 window.BUILDINGS = [
   {
@@ -16,8 +17,8 @@ window.BUILDINGS = [
     architect: "Hans Bernoulli",
     year: 1925,
     address: "Bruderholzallee, Basel",
-    lat: 46.409260,
-    lon: 7.873520,
+    lat: 46.413700,
+    lon: 7.872310,
     illustration: "watertower",
     palette: ["#d9c9a8", "#8a6f44", "#3a2e22"],
     text:
@@ -34,8 +35,8 @@ window.BUILDINGS = [
     architect: "Karl Moser",
     year: 1927,
     address: "Kannenfeldstrasse 35",
-    lat: 46.409150,
-    lon: 7.873650,
+    lat: 46.413640,
+    lon: 7.872400,
     illustration: "antonius",
     palette: ["#9c9388", "#5a5247", "#2f2a23"],
     text:
@@ -52,8 +53,8 @@ window.BUILDINGS = [
     architect: "Karl Egender",
     year: 1936,
     address: "Luzernerring 89",
-    lat: 46.409090,
-    lon: 7.873780,
+    lat: 46.413590,
+    lon: 7.872510,
     illustration: "lukas",
     palette: ["#ddd2bb", "#7c6b51", "#352c23"],
     text:
@@ -70,8 +71,8 @@ window.BUILDINGS = [
     architect: "Miller & Maranta",
     year: 2000,
     address: "Wasgenring 100",
-    lat: 46.409010,
-    lon: 7.873900,
+    lat: 46.413540,
+    lon: 7.872350,
     illustration: "volta",
     palette: ["#c9b88b", "#7d6a3f", "#3a2f1e"],
     text:
@@ -87,8 +88,8 @@ window.BUILDINGS = [
     architect: "Diener & Diener",
     year: 1985,
     address: "St. Johanns-Vorstadt",
-    lat: 46.408940,
-    lon: 7.874020,
+    lat: 46.413510,
+    lon: 7.872480,
     illustration: "davidsboden",
     palette: ["#e3d4b7", "#a98a5d", "#3d3225"],
     text:
@@ -104,8 +105,8 @@ window.BUILDINGS = [
     architect: "Hannes Meyer",
     year: 1924,
     address: "Schwarzwaldallee",
-    lat: 46.408870,
-    lon: 7.874150,
+    lat: 46.413470,
+    lon: 7.872600,
     illustration: "schudel",
     palette: ["#cfc1a3", "#8a7549", "#332a1d"],
     text:
@@ -121,8 +122,8 @@ window.BUILDINGS = [
     architect: "Suter & Suter",
     year: 1957,
     address: "Sevogelplatz",
-    lat: 46.408790,
-    lon: 7.874280,
+    lat: 46.413430,
+    lon: 7.872420,
     illustration: "pavillon",
     palette: ["#b7a47a", "#6e5b34", "#2d2418"],
     text:
@@ -138,8 +139,8 @@ window.BUILDINGS = [
     architect: "Reinhardt + Co.",
     year: 1979,
     address: "Hechtliacker",
-    lat: 46.408720,
-    lon: 7.874410,
+    lat: 46.413390,
+    lon: 7.872550,
     illustration: "hechtliacker",
     palette: ["#d9c7a0", "#9c7e4a", "#3a2e1c"],
     text:
@@ -155,8 +156,8 @@ window.BUILDINGS = [
     architect: "Miller & Maranta",
     year: 2004,
     address: "Schwarzpark, Gellertstrasse",
-    lat: 46.408650,
-    lon: 7.874530,
+    lat: 46.413350,
+    lon: 7.872680,
     illustration: "schwarzpark",
     palette: ["#a89878", "#62543a", "#2c241a"],
     text:
@@ -172,8 +173,8 @@ window.BUILDINGS = [
     architect: "Buchner Bründler",
     year: 2011,
     address: "Dreiländereck, Kleinhüningen",
-    lat: 46.408580,
-    lon: 7.874650,
+    lat: 46.413310,
+    lon: 7.872460,
     illustration: "buvette",
     palette: ["#bca982", "#6a5635", "#2a2117"],
     text:
@@ -189,8 +190,8 @@ window.BUILDINGS = [
     architect: "Hermann Baur",
     year: 1949,
     address: "Brunngässlein 12",
-    lat: 46.408500,
-    lon: 7.874760,
+    lat: 46.413270,
+    lon: 7.872590,
     illustration: "brunngaesslein",
     palette: ["#cbb98a", "#7d6839", "#332919"],
     text:
