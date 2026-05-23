@@ -1,9 +1,8 @@
 # Architekturführer Basel — Hidden Gems
 
 An interactive walking guide to eleven of Basel's quieter architectural
-jewels, drawn from Dorothee Huber's *Architekturführer Basel*. For
-field-testing without travelling to Basel, the coordinates are projected
-onto the small ensemble of houses in **Bieli, Lötschental**
+jewels. For field-testing without travelling to Basel, the coordinates
+are projected onto the small ensemble of houses in **Bieli, Lötschental**
 ([OSM way 60464330](https://www.openstreetmap.org/way/60464330)).
 
 ## Features

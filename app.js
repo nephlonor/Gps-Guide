@@ -14,7 +14,8 @@
     map: null,
     markers: new Map(),
     userMarker: null,
-    userCircle: null
+    userCircle: null,
+    demo: { active: false, raf: null, t0: 0, route: [] }
   };
 
   // ─── DOM ─────────────────────────────────────────────────
@@ -28,6 +29,8 @@
   const targetMeta = $("targetMeta");
   const enableLocationBtn = $("enableLocation");
   const enableCompassBtn = $("enableCompass");
+  const demoWalkBtn = $("demoWalk");
+  const locationHint = $("locationHint");
   const discoveredCount = $("discoveredCount");
   const totalCount = $("totalCount");
   const cardsEl = $("cards");
@@ -267,6 +270,15 @@
     if (e.key === "Escape") closeModal();
   });
 
+  // ─── Vibration ──────────────────────────────────────────
+  // Two-pulse haptic on discovery. No-op on browsers without the API
+  // (iOS Safari) — Android Chrome/Firefox respect the pattern.
+  function vibrateDiscovery() {
+    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      try { navigator.vibrate([90, 50, 140]); } catch (e) { /* ignore */ }
+    }
+  }
+
   // ─── Toast ──────────────────────────────────────────────
   let toastTimer = null;
   function showToast(b) {
@@ -351,16 +363,58 @@
   }
 
   // ─── Geolocation ────────────────────────────────────────
-  function startGeolocation() {
+  function showHint(html, isError) {
+    locationHint.hidden = false;
+    locationHint.classList.toggle("error", !!isError);
+    locationHint.innerHTML = html;
+  }
+  function hideHint() { locationHint.hidden = true; }
+
+  function isSecureish() {
+    return location.protocol === "https:" ||
+      location.hostname === "localhost" ||
+      location.hostname === "127.0.0.1";
+  }
+
+  async function checkPermission() {
+    if (!("permissions" in navigator)) return "unknown";
+    try {
+      const r = await navigator.permissions.query({ name: "geolocation" });
+      return r.state; // 'granted' | 'prompt' | 'denied'
+    } catch { return "unknown"; }
+  }
+
+  async function startGeolocation() {
     if (!("geolocation" in navigator)) {
       setStatus("warn", "Geolocation unavailable");
+      showHint("This browser does not support geolocation. Use <strong>Start demo walk</strong> to explore the app.", true);
       return;
     }
+    if (!isSecureish()) {
+      setStatus("warn", "HTTPS required");
+      showHint("Geolocation needs <strong>HTTPS</strong> (or localhost). Use <strong>Start demo walk</strong> to explore the app.", true);
+      return;
+    }
+
+    const perm = await checkPermission();
+    if (perm === "denied") {
+      setStatus("warn", "Location denied");
+      showHint(
+        "Location is blocked for this site. Click the <strong>lock / site-info icon</strong> next to the address bar, " +
+        "set <em>Location</em> to <em>Allow</em>, then reload. Until then, try <strong>Start demo walk</strong>.",
+        true
+      );
+      return;
+    }
+
     setStatus(null, "Locating…");
+    hideHint();
     enableLocationBtn.disabled = true;
+    enableLocationBtn.textContent = "Locating…";
 
     state.watchId = navigator.geolocation.watchPosition(
       (pos) => {
+        if (state.demo.active) return; // demo overrides live
         state.position = [pos.coords.latitude, pos.coords.longitude];
         if (typeof pos.coords.heading === "number" && !isNaN(pos.coords.heading)) {
           state.heading = pos.coords.heading;
@@ -369,8 +423,22 @@
       },
       (err) => {
         console.warn(err);
-        setStatus("warn", err.code === 1 ? "Location denied" : "Location unavailable");
         enableLocationBtn.disabled = false;
+        enableLocationBtn.textContent = "Enable location";
+        if (err.code === 1) {
+          setStatus("warn", "Location denied");
+          showHint(
+            "Location permission was denied. Click the <strong>lock / site-info icon</strong> in the address bar, " +
+            "reset the <em>Location</em> permission, and reload. Or use <strong>Start demo walk</strong>.",
+            true
+          );
+        } else if (err.code === 2) {
+          setStatus("warn", "Position unavailable");
+          showHint("Your device couldn't get a GPS fix. Try outdoors, or use <strong>Start demo walk</strong>.", true);
+        } else {
+          setStatus("warn", "Location timed out");
+          showHint("Took too long to locate you. Try again, or use <strong>Start demo walk</strong>.", true);
+        }
       },
       { enableHighAccuracy: true, maximumAge: 1000, timeout: 12000 }
     );
@@ -383,8 +451,8 @@
   }
 
   function onPositionUpdate() {
-    setStatus("live", "Live location");
-    enableLocationBtn.textContent = "Tracking — re-centre";
+    setStatus("live", state.demo.active ? "Demo walk" : "Live location");
+    enableLocationBtn.textContent = state.demo.active ? "Enable location" : "Tracking — re-centre";
     enableLocationBtn.disabled = false;
     updateUserPosition();
 
@@ -397,6 +465,7 @@
       if (d <= DISCOVERY_RADIUS_M && !state.discovered.has(b.id)) {
         state.discovered.add(b.id);
         localStorage.setItem("discovered", JSON.stringify([...state.discovered]));
+        vibrateDiscovery();
         showToast(b);
         renderCards();
         if (modal.hidden === false && modalTitle.textContent === b.name) openModal(b);
@@ -433,11 +502,74 @@
 
   // Recenter button reuses the same button after geolocation starts
   enableLocationBtn.addEventListener("click", () => {
+    if (state.demo.active) stopDemoWalk();
     if (state.watchId == null) {
       startGeolocation();
     } else if (state.position) {
       state.map.flyTo(state.position, 18, { duration: 0.6 });
     }
+  });
+
+  // ─── Demo walk ──────────────────────────────────────────
+  // Animate a smooth route that passes inside the 30 m radius of each
+  // of the 11 buildings in numeric order. Lets visitors experience the
+  // arrow, distance, and discovery flow without granting GPS.
+  function buildRoute() {
+    const start = HAMLET_CENTER;
+    const stops = BUILDINGS.map((b) => [b.lat, b.lon]);
+    return [start, ...stops, start];
+  }
+  function interpolate(a, b, t) {
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  }
+
+  function startDemoWalk() {
+    if (state.watchId != null) {
+      navigator.geolocation.clearWatch(state.watchId);
+      state.watchId = null;
+    }
+    state.demo.active = true;
+    state.demo.route = buildRoute();
+    state.demo.t0 = performance.now();
+    demoWalkBtn.textContent = "Stop demo";
+    demoWalkBtn.classList.add("active");
+    enableLocationBtn.textContent = "Enable location";
+    enableLocationBtn.disabled = false;
+    hideHint();
+    setStatus("live", "Demo walk");
+
+    const segMs = 4500; // ms per segment
+    const total = state.demo.route.length - 1;
+
+    function tick(now) {
+      if (!state.demo.active) return;
+      const elapsed = now - state.demo.t0;
+      const segF = Math.min(elapsed / segMs, total);
+      const i = Math.min(Math.floor(segF), total - 1);
+      const t = segF - i;
+      state.position = interpolate(state.demo.route[i], state.demo.route[i + 1], t);
+      // Synthetic heading from movement vector
+      const next = interpolate(state.demo.route[i], state.demo.route[i + 1], Math.min(t + 0.05, 1));
+      state.heading = bearingDeg(state.position, next);
+      onPositionUpdate();
+      if (segF >= total) { stopDemoWalk(); return; }
+      state.demo.raf = requestAnimationFrame(tick);
+    }
+    state.demo.raf = requestAnimationFrame(tick);
+  }
+
+  function stopDemoWalk() {
+    if (!state.demo.active) return;
+    state.demo.active = false;
+    if (state.demo.raf) cancelAnimationFrame(state.demo.raf);
+    demoWalkBtn.textContent = "Start demo walk";
+    demoWalkBtn.classList.remove("active");
+    setStatus(null, "Demo paused");
+  }
+
+  demoWalkBtn.addEventListener("click", () => {
+    if (state.demo.active) stopDemoWalk();
+    else startDemoWalk();
   });
 
   // ─── Compass (device orientation) ───────────────────────
@@ -477,7 +609,7 @@
   });
 
   // ─── Boot ───────────────────────────────────────────────
-  function boot() {
+  async function boot() {
     renderCards();
     initMap();
 
@@ -493,6 +625,21 @@
     totalCount.textContent = BUILDINGS.length;
     targetName.textContent = "Allow location to begin";
     targetMeta.textContent = "11 hidden gems within ~120 m";
+
+    // Pre-flight: warn early if location is already denied or HTTPS is missing.
+    if (!isSecureish()) {
+      showHint("Geolocation needs <strong>HTTPS</strong> (or localhost). Try <strong>Start demo walk</strong> instead.", true);
+    } else {
+      const perm = await checkPermission();
+      if (perm === "denied") {
+        setStatus("warn", "Location denied");
+        showHint(
+          "Location is blocked for this site. Open the <strong>lock / site-info icon</strong> in the address bar, " +
+          "set <em>Location</em> to <em>Allow</em>, then reload. Or try <strong>Start demo walk</strong>.",
+          true
+        );
+      }
+    }
   }
 
   document.addEventListener("DOMContentLoaded", boot);

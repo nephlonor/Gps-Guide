@@ -1,6 +1,5 @@
 /* eslint-disable */
-// Eleven hidden architectural jewels of Basel — selections inspired by
-// Dorothee Huber's "Architekturführer Basel". Coordinates are remapped to
+// Eleven hidden architectural jewels of Basel. Coordinates are remapped to
 // the small ensemble of houses in Bieli (Lötschental), so the proximity-
 // based discovery can be tested in the field.
 //
@@ -24,8 +23,8 @@ window.BUILDINGS = [
       "Hans Bernoulli — better known as a garden-city theorist — gives the utility " +
       "structure a classical demeanour: a slim rusticated base, a fluted shaft of " +
       "exposed concrete and a copper lantern that has weathered to verdigris. " +
-      "Huber notes how the tower mediates between civic monument and engineering " +
-      "object, an early Swiss reading of New Objectivity in soft sandstone tones."
+      "The tower quietly mediates between civic monument and engineering " +
+      "object — an early Swiss reading of New Objectivity in soft sandstone tones."
   },
   {
     id: 2,
@@ -60,8 +59,8 @@ window.BUILDINGS = [
       "standing campanile is detached from the prismatic worship hall; the corner " +
       "windows pour daylight across a white-rendered interior. Built during the " +
       "depression years, the church reads almost as a ship — long, low, and aimed " +
-      "at the western light. Huber praises the seamless interlocking of community " +
-      "spaces around a single, almost monastic, central axis."
+      "at the western light. Community spaces interlock seamlessly around a " +
+      "single, almost monastic, central axis."
   },
   {
     id: 4,
@@ -110,7 +109,7 @@ window.BUILDINGS = [
     text:
       "Built before Meyer's Bauhaus directorship, this small family villa is the " +
       "rough draft of his radical functionalism. Flat roof, ribbon window, exposed " +
-      "concrete lintel — almost shocking in mid-1920s Basel. Huber stresses the " +
+      "concrete lintel — almost shocking in mid-1920s Basel. There is a real " +
       "tension between the sloped garden and the relentlessly horizontal house. " +
       "It still feels like an argument rather than a home."
   },
@@ -145,7 +144,7 @@ window.BUILDINGS = [
       "A late-modern housing estate that bends and steps to follow the hillside. " +
       "The architects refuse a single dominant elevation — instead, dozens of " +
       "small loggias punctuate the brick volumes. From the inside, every flat has " +
-      "a private corner of sky. Huber considers it the most humane large housing " +
+      "a private corner of sky. Arguably the most humane large housing " +
       "project of 1970s Basel and a quiet rebuke to the slab block."
   },
   {
@@ -197,7 +196,7 @@ window.BUILDINGS = [
       "complete tact. A grid of timber windows, a slate roof, a single sculpted " +
       "concrete balcony — nothing more. Inside, however, the section reveals " +
       "split-levels, a double-height living room and a roof terrace that catches " +
-      "the southern light. Huber rates it the finest post-war infill in the " +
-      "Altstadt."
+      "the southern light. Widely held to be the finest post-war infill in " +
+      "the Altstadt."
   }
 ];
