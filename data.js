@@ -1,11 +1,13 @@
 /* eslint-disable */
-// Eleven hidden architectural jewels of Basel. Coordinates are remapped to
-// the small ensemble of houses in Bieli (Lötschental), so the proximity-
-// based discovery can be tested in the field.
+// Eleven hidden architectural jewels of Basel, projected onto the eleven
+// houses of the Bieli hamlet in Lötschental (canton Valais). The markers
+// follow the Weritzalpstrasse, the small lane that climbs north-west out of
+// the valley floor up toward Weritzalp; the road meanders slightly so the
+// houses sit on alternating sides.
 //
-// Centre of the hamlet (approx.): 46.40835° N, 7.87148° E
-// Buildings sit within a ~120 m circle so the 30 m discovery radius is
-// meaningful for walking.
+// Hamlet centre used by the map: 46.40880° N, 7.87400° E
+// Buildings sit within a ~100 m corridor along the road so the 30 m
+// discovery radius is meaningful for walking.
 
 window.BUILDINGS = [
   {
@@ -14,8 +16,8 @@ window.BUILDINGS = [
     architect: "Hans Bernoulli",
     year: 1925,
     address: "Bruderholzallee, Basel",
-    lat: 46.408430,
-    lon: 7.871390,
+    lat: 46.409260,
+    lon: 7.873520,
     illustration: "watertower",
     palette: ["#d9c9a8", "#8a6f44", "#3a2e22"],
     text:
@@ -32,8 +34,8 @@ window.BUILDINGS = [
     architect: "Karl Moser",
     year: 1927,
     address: "Kannenfeldstrasse 35",
-    lat: 46.408530,
-    lon: 7.871750,
+    lat: 46.409150,
+    lon: 7.873650,
     illustration: "antonius",
     palette: ["#9c9388", "#5a5247", "#2f2a23"],
     text:
@@ -50,8 +52,8 @@ window.BUILDINGS = [
     architect: "Karl Egender",
     year: 1936,
     address: "Luzernerring 89",
-    lat: 46.408250,
-    lon: 7.871620,
+    lat: 46.409090,
+    lon: 7.873780,
     illustration: "lukas",
     palette: ["#ddd2bb", "#7c6b51", "#352c23"],
     text:
@@ -68,8 +70,8 @@ window.BUILDINGS = [
     architect: "Miller & Maranta",
     year: 2000,
     address: "Wasgenring 100",
-    lat: 46.408670,
-    lon: 7.871210,
+    lat: 46.409010,
+    lon: 7.873900,
     illustration: "volta",
     palette: ["#c9b88b", "#7d6a3f", "#3a2f1e"],
     text:
@@ -85,8 +87,8 @@ window.BUILDINGS = [
     architect: "Diener & Diener",
     year: 1985,
     address: "St. Johanns-Vorstadt",
-    lat: 46.408140,
-    lon: 7.871420,
+    lat: 46.408940,
+    lon: 7.874020,
     illustration: "davidsboden",
     palette: ["#e3d4b7", "#a98a5d", "#3d3225"],
     text:
@@ -102,8 +104,8 @@ window.BUILDINGS = [
     architect: "Hannes Meyer",
     year: 1924,
     address: "Schwarzwaldallee",
-    lat: 46.408380,
-    lon: 7.870980,
+    lat: 46.408870,
+    lon: 7.874150,
     illustration: "schudel",
     palette: ["#cfc1a3", "#8a7549", "#332a1d"],
     text:
@@ -119,8 +121,8 @@ window.BUILDINGS = [
     architect: "Suter & Suter",
     year: 1957,
     address: "Sevogelplatz",
-    lat: 46.408720,
-    lon: 7.871540,
+    lat: 46.408790,
+    lon: 7.874280,
     illustration: "pavillon",
     palette: ["#b7a47a", "#6e5b34", "#2d2418"],
     text:
@@ -136,8 +138,8 @@ window.BUILDINGS = [
     architect: "Reinhardt + Co.",
     year: 1979,
     address: "Hechtliacker",
-    lat: 46.408910,
-    lon: 7.871680,
+    lat: 46.408720,
+    lon: 7.874410,
     illustration: "hechtliacker",
     palette: ["#d9c7a0", "#9c7e4a", "#3a2e1c"],
     text:
@@ -153,8 +155,8 @@ window.BUILDINGS = [
     architect: "Miller & Maranta",
     year: 2004,
     address: "Schwarzpark, Gellertstrasse",
-    lat: 46.408060,
-    lon: 7.871760,
+    lat: 46.408650,
+    lon: 7.874530,
     illustration: "schwarzpark",
     palette: ["#a89878", "#62543a", "#2c241a"],
     text:
@@ -170,8 +172,8 @@ window.BUILDINGS = [
     architect: "Buchner Bründler",
     year: 2011,
     address: "Dreiländereck, Kleinhüningen",
-    lat: 46.408610,
-    lon: 7.870880,
+    lat: 46.408580,
+    lon: 7.874650,
     illustration: "buvette",
     palette: ["#bca982", "#6a5635", "#2a2117"],
     text:
@@ -187,8 +189,8 @@ window.BUILDINGS = [
     architect: "Hermann Baur",
     year: 1949,
     address: "Brunngässlein 12",
-    lat: 46.408250,
-    lon: 7.871090,
+    lat: 46.408500,
+    lon: 7.874760,
     illustration: "brunngaesslein",
     palette: ["#cbb98a", "#7d6839", "#332919"],
     text:
