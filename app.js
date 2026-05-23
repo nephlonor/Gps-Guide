@@ -331,6 +331,9 @@
   let activeModalId = null;
   function openModal(b) {
     activeModalId = b.id;
+    // Opening the modal is a user tap — a guaranteed gesture, so retry
+    // any haptic the geolocation callback wasn't allowed to fire.
+    consumeHaptic();
     modalTitle.textContent = b.name;
     modalFigure.innerHTML = illustration(b);
     modalYear.textContent = b.year;
@@ -378,6 +381,7 @@
 
   // ─── Toast ──────────────────────────────────────────────
   let toastTimer = null;
+  let toastBuildingId = null;
   function showToast(b) {
     let t = document.querySelector(".toast");
     if (!t) {
@@ -385,17 +389,44 @@
       t.className = "toast";
       t.innerHTML = `<span class="toast-icon">★</span><span class="toast-text"></span>`;
       document.body.appendChild(t);
+      // A tap on the toast = a real user gesture: vibrate (if blocked
+      // earlier) and open the freshly-unlocked building.
+      t.addEventListener("click", () => {
+        consumeHaptic();
+        if (toastBuildingId != null) {
+          const found = BUILDINGS.find((x) => x.id === toastBuildingId);
+          if (found) openModal(found);
+        }
+        t.classList.remove("show");
+      });
     }
+    toastBuildingId = b.id;
     t.querySelector(".toast-text").textContent = `Unlocked: ${b.name}`;
     t.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove("show"), 3000);
   }
 
+  // Strong two-pulse haptic. Browsers (notably Chrome on Android) gate
+  // navigator.vibrate behind a recent user gesture, so this is also
+  // re-fired whenever the user interacts with anything related to the
+  // discovery (tapping the toast, opening the unlocked modal).
+  const VIBRATION_PATTERN = [220, 90, 360];
+  function vibrate(pattern) {
+    if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return false;
+    try { return navigator.vibrate(pattern || VIBRATION_PATTERN); }
+    catch (e) { return false; }
+  }
+  // Track the most recent discovery so a subsequent user gesture can
+  // retry the haptic if the browser silently swallowed the auto-fire.
+  let pendingHaptic = false;
   function vibrateDiscovery() {
-    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-      try { navigator.vibrate([90, 50, 140]); } catch (e) { /* ignore */ }
-    }
+    pendingHaptic = true;
+    vibrate(VIBRATION_PATTERN);
+  }
+  function consumeHaptic() {
+    if (!pendingHaptic) return;
+    if (vibrate(VIBRATION_PATTERN)) pendingHaptic = false;
   }
 
   // ─── Map ────────────────────────────────────────────────
