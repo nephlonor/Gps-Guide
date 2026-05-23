@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#c5dcd6" />
-  <title>Architekturführer Basel — Stadtführer</title>
+  <title>Architekturführer — Stadtführer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" />
@@ -12,84 +12,164 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-side">
-      <button class="icon-btn" id="backBtn" aria-label="Zurück" type="button">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-      <h1 class="brand-title">Stadtführer</h1>
-    </div>
-    <div class="topbar-side">
-      <div class="avatar" aria-hidden="true">AB</div>
-      <button class="icon-btn" id="menuBtn" aria-label="Mehr" type="button">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
-      </button>
-    </div>
-  </header>
 
-  <div class="closest" id="closestPill">
-    <span class="closest-icon" aria-hidden="true">
-      <svg id="compassArrow" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 3 L17 18 L12 15 L7 18 Z" fill="currentColor"/>
-      </svg>
-    </span>
-    <span><span class="closest-prefix">Nächstes:</span> <strong id="closestName">Standort aktivieren, um zu beginnen</strong></span>
-    <span class="closest-dist" id="closestDist">—</span>
-  </div>
+  <!-- ════════ 1. TOUR-AUSWAHL ════════ -->
+  <section class="screen" id="tourScreen">
+    <header class="topbar">
+      <div class="topbar-side">
+        <div class="brand-mark" aria-hidden="true">AB</div>
+        <h1 class="brand-title">Architekturführer</h1>
+      </div>
+    </header>
 
-  <main class="shell">
-    <section class="hero">
-      <div class="map-frame">
-        <div id="map"></div>
-        <div class="map-overlay"><strong id="discoveredCount">0</strong>/<span id="totalCount">11</span> entdeckt</div>
-        <div class="fab-row">
-          <button class="fab primary" id="enableLocation" type="button">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-            <span id="enableLocationLabel">Standort aktivieren</span>
-          </button>
-          <button class="fab" id="enableCompass" type="button" hidden>Kompass</button>
+    <div class="splash">
+      <h2 class="splash-title">Wähle eine Stadtführung</h2>
+      <p class="splash-sub">Sieben Touren — die erste ist verfügbar, die übrigen entstehen gerade.</p>
+
+      <div class="tour-list" id="tourList"></div>
+
+      <p class="splash-foot">Pro 60 Minuten CHF 2.00 · Tagespass (24 h) CHF 12.00</p>
+    </div>
+  </section>
+
+  <!-- ════════ 2. ZEIT- UND ZAHLUNGS-SCREEN ════════ -->
+  <section class="screen" id="paymentScreen" hidden>
+    <header class="topbar">
+      <div class="topbar-side">
+        <button class="icon-btn" id="paymentBack" aria-label="Zurück" type="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h1 class="brand-title" id="paymentTitle">11 Geheimtipps</h1>
+      </div>
+    </header>
+
+    <div class="pay-stage">
+      <p class="pay-hint">Drehe das Rad, um deine Zeit zu wählen.</p>
+
+      <div class="dial-wrap">
+        <svg class="dial-ring" viewBox="0 0 240 240" aria-hidden="true">
+          <circle cx="120" cy="120" r="108" class="dial-track"/>
+          <circle cx="120" cy="120" r="108" class="dial-progress" id="dialProgress"
+                  pathLength="360" stroke-dasharray="360" stroke-dashoffset="330"
+                  transform="rotate(-90 120 120)"/>
+          <g id="dialTicks"></g>
+        </svg>
+        <div class="dial-knob" id="dialKnob" role="slider"
+             aria-label="Zeit in Minuten" aria-valuemin="1" aria-valuemax="360" aria-valuenow="30" tabindex="0">
+          <span class="dial-handle"></span>
+        </div>
+        <div class="dial-center">
+          <p class="dial-time" id="dialTime">30 min</p>
+          <p class="dial-price" id="dialPrice">CHF 1.00</p>
+          <p class="dial-mode" id="dialMode" hidden>Tagespass · 24 h</p>
         </div>
       </div>
-      <div class="hero-meta">
-        <div>
-          <p class="location-label">Aktueller Standort</p>
-          <h2 class="location-name">Biel, Lötschental</h2>
+
+      <div class="dial-quick">
+        <button class="quick-btn" data-min="30">30 min</button>
+        <button class="quick-btn" data-min="60">1 h</button>
+        <button class="quick-btn" data-min="180">3 h</button>
+        <button class="quick-btn" data-min="360">6 h</button>
+        <button class="quick-btn day" data-min="1440">Tagespass</button>
+      </div>
+
+      <div class="pay-methods">
+        <p class="pay-label">Zahlungsmethode</p>
+        <button class="pay-method twint" data-method="twint" type="button">
+          <span class="pay-logo">TWINT</span>
+          <span class="pay-method-text">Mit Twint bezahlen</span>
+        </button>
+        <button class="pay-method paypal" data-method="paypal" type="button">
+          <span class="pay-logo paypal-logo"><em>Pay</em><strong>Pal</strong></span>
+          <span class="pay-method-text">Mit PayPal bezahlen</span>
+        </button>
+      </div>
+
+      <p class="pay-fineprint">Demo-App — es erfolgt keine echte Belastung.</p>
+    </div>
+  </section>
+
+  <!-- ════════ 3. HAUPT-APP ════════ -->
+  <section class="screen" id="appScreen" hidden>
+    <div class="countdown-bar">
+      <div class="cd-info">
+        <span class="cd-label">Verbleibend</span>
+        <strong class="cd-time" id="countdownTime">—</strong>
+      </div>
+      <button class="cd-btn" id="adjustTimeBtn" type="button">Zeit anpassen</button>
+    </div>
+
+    <header class="topbar">
+      <div class="topbar-side">
+        <button class="icon-btn" id="backBtn" aria-label="Zurück" type="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h1 class="brand-title">11 Geheimtipps Basel</h1>
+      </div>
+      <div class="topbar-side">
+        <div class="avatar" aria-hidden="true">AB</div>
+        <button class="icon-btn" id="menuBtn" aria-label="Mehr" type="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="closest" id="closestPill">
+      <span class="closest-prefix">Nächstes:</span>
+      <strong id="closestName">Standort aktivieren</strong>
+      <span class="closest-dist" id="closestDist">—</span>
+    </div>
+
+    <main class="shell">
+      <section class="hero">
+        <div class="map-frame">
+          <div id="map"></div>
+          <div class="map-overlay"><strong id="discoveredCount">0</strong>/<span id="totalCount">11</span> entdeckt</div>
+          <div class="fab-row">
+            <button class="fab primary" id="enableLocation" type="button">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+              <span id="enableLocationLabel">Standort aktivieren</span>
+            </button>
+          </div>
         </div>
+      </section>
+
+      <!-- BIG ARROW WIDGET — direkt unter der Karte -->
+      <section class="big-arrow" aria-label="Richtungsanzeiger zum nächsten Gebäude">
+        <div class="big-arrow-circle">
+          <svg id="compassArrow" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3 L17.5 19 L12 15.5 L6.5 19 Z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="big-arrow-info">
+          <p class="big-arrow-label">In Richtung</p>
+          <p class="big-arrow-name" id="bigArrowName">—</p>
+          <p class="big-arrow-dist" id="bigArrowDist">—</p>
+        </div>
+      </section>
+
+      <div class="style-row" role="tablist" aria-label="Stilfilter">
+        <button class="style-pill active" data-filter="all" role="tab">Alle</button>
+        <button class="style-pill" data-filter="modernism" role="tab">Moderne</button>
+        <button class="style-pill" data-filter="bauhaus" role="tab">Bauhaus</button>
+        <button class="style-pill" data-filter="post-war" role="tab">Nachkriegszeit</button>
+        <button class="style-pill" data-filter="contemporary" role="tab">Zeitgenössisch</button>
+        <button class="style-pill" data-filter="sacred" role="tab">Sakralbau</button>
       </div>
-    </section>
 
-    <section class="stats" aria-label="Übersicht">
-      <div class="stat-card">
-        <span class="stat-num" id="statDiscovered">0</span>
-        <span class="stat-label"><strong>Gebäude</strong>entdeckt</span>
+      <div class="section-head">
+        <h2>Gebäude in der Nähe</h2>
+        <span class="count" id="visibleCount">11 von 11</span>
       </div>
-      <div class="stat-card">
-        <span class="stat-num">11</span>
-        <span class="stat-label"><strong>Geheimtipps</strong>entlang der Weritzalpstrasse</span>
-      </div>
-    </section>
+      <div class="cards" id="cards"></div>
 
-    <div class="style-row" role="tablist" aria-label="Stilfilter">
-      <button class="style-pill active" data-filter="all" role="tab">Alle</button>
-      <button class="style-pill" data-filter="modernism" role="tab">Moderne</button>
-      <button class="style-pill" data-filter="bauhaus" role="tab">Bauhaus</button>
-      <button class="style-pill" data-filter="post-war" role="tab">Nachkriegszeit</button>
-      <button class="style-pill" data-filter="contemporary" role="tab">Zeitgenössisch</button>
-      <button class="style-pill" data-filter="sacred" role="tab">Sakralbau</button>
-    </div>
+      <p class="hint" id="locationHint" hidden></p>
+    </main>
 
-    <div class="section-head">
-      <h2>Gebäude in der Nähe</h2>
-      <span class="count" id="visibleCount">11 von 11</span>
-    </div>
-    <div class="cards" id="cards"></div>
-
-    <p class="hint" id="locationHint" hidden></p>
-  </main>
-
-  <footer class="footer">
-    Elf versteckte Meisterwerke der Basler Architektur — projiziert auf die elf Häuser des Walliser Weilers Bieli (Lötschental).
-  </footer>
+    <footer class="footer">
+      Elf versteckte Meisterwerke der Basler Architektur — projiziert auf die elf Häuser des Walliser Weilers Bieli (Lötschental).
+    </footer>
+  </section>
 
   <!-- Detail-Sheet -->
   <div class="modal" id="modal" hidden>
@@ -126,9 +206,9 @@
           </div>
         </div>
         <div class="info-card purple" id="modalDetailCard">
-          <span class="info-icon" aria-hidden="true">★</span>
+          <span class="info-icon" aria-hidden="true">👀</span>
           <div class="info-body">
-            <p class="info-title">Architektonisches Detail</p>
+            <p class="info-title">Schau genau hin</p>
             <p class="info-text" id="modalDetail">—</p>
           </div>
         </div>
@@ -147,7 +227,7 @@
     </article>
   </div>
 
-  <!-- Überlaufmenü (••• in der Topbar) -->
+  <!-- Überlaufmenü -->
   <div class="menu-sheet" id="menuSheet" hidden>
     <div class="modal-backdrop" data-menu-close></div>
     <div class="menu-card" role="dialog" aria-modal="true" aria-label="Optionen">

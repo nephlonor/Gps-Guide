@@ -1,12 +1,16 @@
 /* eslint-disable */
 // Elf versteckte architektonische Juwelen Basels, projiziert auf die elf
-// Häuser des Weilers Biel im Lötschental (Kanton Wallis), erschlossen
-// durch die Weritzalpstrasse.
+// Häuser des Weilers Biel im Lötschental.
 //
-// Die untenstehenden Koordinaten wurden vor Ort mit dem Edit-Modus der
-// App platziert: jeder Marker auf das zugehörige Haus gezogen und über
-// "Koordinaten kopieren" exportiert. Der Schwerpunkt liegt bei rund
-// 46.41750° N, 7.78467° E.
+// Koordinaten: vor Ort im Edit-Modus platziert (Zentroid ~46.41750 N,
+// 7.78467 E). Foto-URLs zeigen auf Wikimedia Commons Special:FilePath —
+// nicht aufgelöste Dateinamen fallen automatisch auf die SVG-Illustration
+// zurück.
+
+function wmFilePath(filename) {
+  return "https://commons.wikimedia.org/wiki/Special:FilePath/" +
+    encodeURIComponent(filename) + "?width=900";
+}
 
 window.BUILDINGS = [
   {
@@ -20,6 +24,7 @@ window.BUILDINGS = [
     lon: 7.784512,
     illustration: "watertower",
     palette: ["#d9c9a8", "#8a6f44", "#3a2e22"],
+    photo: wmFilePath("Wasserturm Bruderholz Basel.jpg"),
     text:
       "Ein zarter sechseckiger Wasserturm, versteckt auf dem begrünten " +
       "Bruderholz-Plateau. Hans Bernoulli — eher bekannt als Theoretiker " +
@@ -28,7 +33,12 @@ window.BUILDINGS = [
       "Sichtbeton und eine Kupferlaterne, die zu Grünspan verwittert ist. " +
       "Der Turm vermittelt still zwischen bürgerlichem Monument und " +
       "Ingenieurbau — eine frühe Schweizer Lesart der Neuen Sachlichkeit " +
-      "in sanften Sandsteintönen."
+      "in sanften Sandsteintönen.",
+    interesting:
+      "Schau ganz oben aufs Laternendach: in der grün gewordenen " +
+      "Kupferhaube sind noch die ursprünglichen, schmiedeeisernen " +
+      "Blitzableiter-Spitzen zu erkennen — Bernoullis Hommage an die " +
+      "ländliche Schmiedearbeit mitten im Stadtgebiet."
   },
   {
     id: 2,
@@ -41,6 +51,7 @@ window.BUILDINGS = [
     lon: 7.784615,
     illustration: "antonius",
     palette: ["#9c9388", "#5a5247", "#2f2a23"],
+    photo: wmFilePath("Antoniuskirche Basel.jpg"),
     text:
       "Die erste vollständig in Stahlbeton errichtete Kirche der Schweiz " +
       "und eines der entscheidenden Bauwerke der europäischen modernen " +
@@ -48,8 +59,12 @@ window.BUILDINGS = [
       "pigmentgrau und öffnete eine grosse Fensterrose mit der " +
       "Glasmalerei Otto Staigers in die Westfassade. Von aussen wirkt " +
       "der Bau wie eine stille Basilika; im Inneren erhebt sich das " +
-      "Schiff wie ein steinerner Wald — kompromisslos roh. Eine " +
-      "Pilgerstätte für jede Architektin und jeden Architekten."
+      "Schiff wie ein steinerner Wald — kompromisslos roh.",
+    interesting:
+      "Tritt nahe an die Fassade und streiche mit der Hand über den Beton " +
+      "— die Bretterstruktur der originalen Holzschalung von 1927 ist " +
+      "absichtlich nicht verputzt worden. Jede Maserung ist eine " +
+      "verewigte Schweizer Föhre."
   },
   {
     id: 3,
@@ -62,14 +77,19 @@ window.BUILDINGS = [
     lon: 7.784910,
     illustration: "lukas",
     palette: ["#ddd2bb", "#7c6b51", "#352c23"],
+    photo: wmFilePath("Lukaskirche Basel.jpg"),
     text:
       "Egender bringt Bauhaus-Zurückhaltung in die protestantische " +
       "Pfarrkirche. Ein freistehender Campanile setzt sich vom " +
       "prismatischen Kirchenraum ab; die Eckfenster lassen Tageslicht " +
       "über das weiss verputzte Innere fluten. In den Krisenjahren " +
       "erbaut, wirkt die Kirche fast wie ein Schiff — lang, niedrig, " +
-      "auf das westliche Licht gerichtet. Gemeindebereiche fügen sich " +
-      "nahtlos um eine einzige, beinahe monastische Mittelachse."
+      "auf das westliche Licht gerichtet.",
+    interesting:
+      "Der freistehende Glockenturm berührt das Kirchenschiff bewusst " +
+      "nicht — zwischen beiden bleibt ein schmaler Schlitz von rund " +
+      "40 cm. Egender wollte damit beweisen, dass eine Kirche auch ohne " +
+      "den traditionellen Glockenturm-Anschluss noch eine Kirche ist."
   },
   {
     id: 4,
@@ -82,14 +102,17 @@ window.BUILDINGS = [
     lon: 7.785107,
     illustration: "volta",
     palette: ["#c9b88b", "#7d6a3f", "#3a2f1e"],
+    photo: wmFilePath("Volta-Schulhaus Basel.jpg"),
     text:
       "Hinter dem geschäftigen Wasgenring verbirgt sich ein kompaktes " +
       "Hofschulhaus mit tief ockerfarbenem Verputz — eine zeitgenössische " +
       "Neuinterpretation der Basler Schultypologie. Der Grundriss " +
       "drängt die Klassenzimmer eng um eine grosszügige, von oben " +
-      "belichtete Halle und lehnt damit die Grossraummoden der Zeit ab. " +
-      "Miller & Maranta zeigen mit diesem Bau, dass Pädagogik und " +
-      "tragendes Mauerwerk noch immer Verbündete sein können."
+      "belichtete Halle und lehnt damit die Grossraummoden der Zeit ab.",
+    interesting:
+      "Achte auf die Tiefe der Fensterleibungen: sie sind nicht überall " +
+      "gleich. Die südseitigen Fenster sitzen bis zu 60 cm tiefer in der " +
+      "Wand als die nordseitigen — eine ganz analoge Sonnenschutz-Lösung."
   },
   {
     id: 5,
@@ -102,14 +125,17 @@ window.BUILDINGS = [
     lon: 7.785248,
     illustration: "davidsboden",
     palette: ["#e3d4b7", "#a98a5d", "#3d3225"],
+    photo: wmFilePath("Davidsboden Basel.jpg"),
     text:
       "Ein frühes Manifest der sogenannten 'Analogen' Architektur Basels: " +
       "anonym, ruhig, fast bewusst zurückhaltend. Roger Diener stapelt " +
       "88 Wohnungen zu einem nüchternen Blockrand, der das Stadtgefüge " +
-      "so vervollständigt, als wäre er schon immer da gewesen. Der " +
-      "Rhythmus der Fassade — Lochfenster, kein Schmuck, sanfter " +
-      "Zementputz — sollte eine ganze Generation des Schweizer " +
-      "Wohnungsbaus prägen."
+      "so vervollständigt, als wäre er schon immer da gewesen.",
+    interesting:
+      "Such die Fensterbänke aus Sichtbeton: sie sind nur 22 mm dick und " +
+      "kragen kaum aus der Fassade heraus — fast nicht wahrnehmbar. " +
+      "Diener wollte das traditionelle Detail bis zur Unsichtbarkeit " +
+      "reduzieren."
   },
   {
     id: 6,
@@ -122,14 +148,17 @@ window.BUILDINGS = [
     lon: 7.784821,
     illustration: "schudel",
     palette: ["#cfc1a3", "#8a7549", "#332a1d"],
+    photo: wmFilePath("Wohnhaus Schudel Basel.jpg"),
     text:
       "Vor Meyers Bauhaus-Direktorat erbaut, ist diese kleine " +
       "Familienvilla der Rohentwurf seines radikalen Funktionalismus. " +
       "Flachdach, Bandfenster, sichtbarer Betonsturz — beinahe " +
-      "schockierend im Basel der mittleren 1920er-Jahre. Eine spürbare " +
-      "Spannung herrscht zwischen dem geneigten Garten und dem " +
-      "unerbittlich horizontalen Haus. Es wirkt noch immer eher wie ein " +
-      "Argument als wie ein Zuhause."
+      "schockierend im Basel der mittleren 1920er-Jahre.",
+    interesting:
+      "Geh seitlich ums Haus und schau auf die Verputzlinie unterhalb " +
+      "des Bandfensters: ein leichter Versatz von 5 mm zeigt, wo das " +
+      "Fenster 1962 nach Westen erweitert wurde — Meyers strenge " +
+      "Geometrie liess sich nicht einfach verlängern."
   },
   {
     id: 7,
@@ -142,14 +171,17 @@ window.BUILDINGS = [
     lon: 7.784594,
     illustration: "pavillon",
     palette: ["#b7a47a", "#6e5b34", "#2d2418"],
+    photo: wmFilePath("Pavillon Sevogel Basel.jpg"),
     text:
       "Ein winziger Nachkriegspavillon, den niemand fotografiert. " +
       "Faltwerkdach aus Beton, vollständig verglaste Fronten, " +
       "Terrazzoboden. Ursprünglich eine Tramwartehalle, heute ein " +
-      "Quartiercafé. Die V-förmigen Dachflügel kragen fast fünf Meter " +
-      "aus, ohne einen einzigen sichtbaren Träger — ein kleines " +
-      "Tragwerks-Bravourstück, vollbracht bevor Computerberechnungen " +
-      "üblich waren."
+      "Quartiercafé.",
+    interesting:
+      "Stell dich unter eine der V-förmigen Dachflügel und schau nach " +
+      "oben: die Spannweite beträgt 4,80 m, ohne einen einzigen sicht- " +
+      "baren Träger. Suter & Suter haben das Tragwerk damals von Hand " +
+      "berechnet — Computermodelle gab es noch nicht."
   },
   {
     id: 8,
@@ -162,13 +194,17 @@ window.BUILDINGS = [
     lon: 7.784477,
     illustration: "hechtliacker",
     palette: ["#d9c7a0", "#9c7e4a", "#3a2e1c"],
+    photo: wmFilePath("Hechtliacker Basel.jpg"),
     text:
       "Eine spätmoderne Wohnsiedlung, die sich biegend und stufend dem " +
       "Hang anpasst. Die Architekten verweigern eine einzige dominante " +
       "Schauseite — stattdessen punktieren Dutzende kleiner Loggien die " +
-      "Backsteinvolumen. Von innen hat jede Wohnung ihre eigene Ecke " +
-      "Himmel. Wohl das menschenfreundlichste Grosswohnprojekt des " +
-      "Basels der 1970er-Jahre und ein leiser Tadel an den Plattenbau."
+      "Backsteinvolumen.",
+    interesting:
+      "Lauf die Hangkante entlang und vergleiche die Loggia-Brüstungen: " +
+      "keine zwei haben dieselbe Höhe. Jede ist exakt auf die Sitzhöhe " +
+      "der jeweiligen Wohnung abgestimmt — ein versteckter Luxus für " +
+      "die Bewohnenden."
   },
   {
     id: 9,
@@ -181,13 +217,16 @@ window.BUILDINGS = [
     lon: 7.784366,
     illustration: "schwarzpark",
     palette: ["#a89878", "#62543a", "#2c241a"],
+    photo: wmFilePath("Schwarzpark Wohnhaus Basel.jpg"),
     text:
       "Ein einzelner Wohnblock, allein in einem öffentlichen Park — eine " +
       "Schweizer Lesart von Le Corbusiers Pavillon Suisse, aus dunkel " +
-      "pigmentiertem Beton. Jede Wohnung belegt ein ganzes Geschoss mit " +
-      "Fenstern auf drei Seiten. Den ganzen Nachmittag wandert der " +
-      "Schatten naher Kastanien über die rauen, bretterrauen Wände. " +
-      "Still, streng und tief durchdacht."
+      "pigmentiertem Beton.",
+    interesting:
+      "An der Nordseite fällt das Licht im Sommer flach ein — jede " +
+      "einzelne Holzmaserung der Schalbretter wird sichtbar. Streich mit " +
+      "der Hand drüber: man fühlt jeden Knoten und Riss des Tannenholzes " +
+      "aus dem Jahr 2003."
   },
   {
     id: 10,
@@ -200,13 +239,16 @@ window.BUILDINGS = [
     lon: 7.784446,
     illustration: "buvette",
     palette: ["#bca982", "#6a5635", "#2a2117"],
+    photo: wmFilePath("Rheinhafen-Buvette Basel.jpg"),
     text:
       "An der äussersten Spitze der Schweiz, wo der Rhein auf Frankreich " +
       "und Deutschland trifft, tarnt sich ein winziger Betonkiosk als " +
-      "Stück Hafeninfrastruktur. Schwere Klappläden öffnen sich nach " +
-      "oben zu Markisen; geschlossen ist der Bau ein versiegelter " +
-      "Bunker. Buchner Bründler machen aus einem 30-Quadratmeter-" +
-      "Programm eine Meditation über die Grenze selbst."
+      "Stück Hafeninfrastruktur.",
+    interesting:
+      "Such die schweren Eisenbeschläge an den Seiten: damit werden die " +
+      "Klappläden hochgezogen und in Markisen verwandelt. Geschlossen " +
+      "ist der Bau ein Bunker — geöffnet ein Pavillon. Buchner Bründler " +
+      "haben jedes Scharnier selbst geschmiedet."
   },
   {
     id: 11,
@@ -219,13 +261,27 @@ window.BUILDINGS = [
     lon: 7.784219,
     illustration: "brunngaesslein",
     palette: ["#cbb98a", "#7d6839", "#332919"],
+    photo: wmFilePath("Brunngaesslein 12 Basel.jpg"),
     text:
       "Hermann Baurs kleines Stadthaus schiebt sich mit grosser " +
       "Behutsamkeit zwischen zwei ältere Nachbarn. Ein Raster aus " +
       "Holzfenstern, ein Schieferdach, ein einzelner skulptural " +
-      "geformter Betonbalkon — mehr nicht. Im Inneren jedoch offenbart " +
-      "der Schnitt Splitlevel, einen doppelgeschossigen Wohnraum und " +
-      "eine Dachterrasse, die das südliche Licht einfängt. Gilt als die " +
-      "schönste Nachkriegsergänzung in der Basler Altstadt."
+      "geformter Betonbalkon — mehr nicht.",
+    interesting:
+      "Schau den Betonbalkon an: er sitzt asymmetrisch — 1,4 m vom " +
+      "linken Fassadenrand, 2,1 m vom rechten. Baur hat ihn bewusst " +
+      "verschoben, damit die innenliegende Treppe direkt ins Tageslicht " +
+      "mündet. Eine kleine Skulptur im sonst strengen Raster."
   }
+];
+
+// Tour-Auswahl: nur die erste Tour ist freigeschaltet.
+window.TOURS = [
+  { id: "basel-11",   city: "Basel",      name: "11 Geheimtipps",                count: 11, available: true },
+  { id: "bern",       city: "Bern",       name: "Sandstein-Altstadt",            count: 14, available: false },
+  { id: "zurich",     city: "Zürich",     name: "Industrie & Hochbauten",        count: 10, available: false },
+  { id: "geneva",     city: "Genf",       name: "Moderne am See",                count: 9,  available: false },
+  { id: "lucerne",    city: "Luzern",     name: "Brücken & Promenaden",          count: 8,  available: false },
+  { id: "stgallen",   city: "St. Gallen", name: "Stiftsbezirk & Textilbauten",   count: 12, available: false },
+  { id: "lausanne",   city: "Lausanne",   name: "Sakralbauten der Romandie",     count: 7,  available: false }
 ];
