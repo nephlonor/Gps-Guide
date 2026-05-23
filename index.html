@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0f0f" />
+  <title>Architekturführer Basel — Hidden Gems</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">AB</div>
+      <div class="brand-text">
+        <h1>Architekturführer Basel</h1>
+        <p>Eleven hidden gems — a guided walk</p>
+      </div>
+    </div>
+    <div class="status" id="status">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Locating…</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="compass-panel" aria-label="Navigation">
+      <div class="compass-card">
+        <div class="compass-header">
+          <span class="label">Nearest building</span>
+          <span class="distance" id="distanceValue">— m</span>
+        </div>
+        <div class="compass-stage">
+          <div class="compass-ring">
+            <div class="compass-tick n">N</div>
+            <div class="compass-tick e">E</div>
+            <div class="compass-tick s">S</div>
+            <div class="compass-tick w">W</div>
+            <svg class="compass-arrow" id="compassArrow" viewBox="0 0 100 100" aria-hidden="true">
+              <defs>
+                <linearGradient id="arrowGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ff6a3d" />
+                  <stop offset="100%" stop-color="#c0392b" />
+                </linearGradient>
+              </defs>
+              <polygon points="50,8 62,58 50,50 38,58" fill="url(#arrowGrad)" />
+              <circle cx="50" cy="50" r="4" fill="#0f0f0f" />
+              <polygon points="50,92 56,58 50,62 44,58" fill="#2a2a2a" opacity="0.6" />
+            </svg>
+          </div>
+        </div>
+        <div class="compass-target">
+          <span class="target-num" id="targetNum">—</span>
+          <div class="target-info">
+            <strong id="targetName">Searching…</strong>
+            <span id="targetMeta">Allow location to begin</span>
+          </div>
+        </div>
+        <button class="ghost-btn" id="enableLocation" type="button">Enable location</button>
+        <button class="ghost-btn subtle" id="enableCompass" type="button" hidden>Enable compass</button>
+      </div>
+
+      <div class="legend">
+        <p class="legend-title">How it works</p>
+        <ol>
+          <li>Allow location access — the compass points to the closest jewel.</li>
+          <li>Walk within <strong>30 m</strong> of any building to unlock its story.</li>
+          <li>Discovered entries stay open in the catalogue below.</li>
+        </ol>
+        <p class="legend-credit">After Dorothee Huber, <em>Architekturführer Basel</em>.</p>
+      </div>
+    </section>
+
+    <section class="map-panel" aria-label="Map">
+      <div id="map"></div>
+      <div class="map-overlay">
+        <span id="discoveredCount">0</span> of <span id="totalCount">11</span> discovered
+      </div>
+    </section>
+  </main>
+
+  <section class="catalogue" id="catalogue" aria-label="Buildings">
+    <div class="catalogue-head">
+      <h2>The eleven jewels</h2>
+      <p>Tap a card on the map to preview. Full descriptions unlock at 30 m.</p>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <!-- Discovery modal -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" data-close aria-label="Close">×</button>
+      <div class="modal-figure" id="modalFigure"></div>
+      <div class="modal-body">
+        <span class="modal-tag" id="modalTag">No. — · Year</span>
+        <h3 id="modalTitle">Title</h3>
+        <p class="modal-arch" id="modalArch">Architect</p>
+        <p class="modal-text" id="modalText">Description.</p>
+        <p class="modal-foot" id="modalFoot">Address</p>
+      </div>
+    </article>
+  </div>
+
+  <footer class="footer">
+    <p>Designed for the hamlet of Bieli, Lötschental — re-projecting Basel's quiet masterpieces onto a Walliser village.</p>
+  </footer>
+
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
