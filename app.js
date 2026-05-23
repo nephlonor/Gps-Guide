@@ -2,17 +2,17 @@
 (function () {
   "use strict";
 
-  const DISCOVERY_RADIUS_M = 30;
+  const DISCOVERY_RADIUS_M = 3;
   const HAMLET_CENTER = [46.41750, 7.78467];
   const ANCHOR_KEY = "anchorOffset";
   const COORDS_VERSION = "biel-survey-1";
   const COORDS_VERSION_KEY = "coordsVersion";
 
-  // One-time migration: the baked-in defaults are now the field-surveyed
-  // coordinates, so any anchor offset or per-building override stored
-  // from an earlier version of the app would shift the markers off the
-  // real houses. Clear them once when the version flag is missing or
-  // stale, then mark this version as applied.
+  // Einmalige Migration: die in der App hinterlegten Koordinaten sind
+  // jetzt die im Feld erhobenen Werte. Ältere Anker- oder Override-
+  // Daten aus dem ehemaligen Edit-Modus würden die Marker von den
+  // realen Häusern wegziehen. Beim ersten Laden mit der aktuellen
+  // Version werden sie deshalb verworfen.
   (function migrateStaleAnchors() {
     try {
       if (localStorage.getItem(COORDS_VERSION_KEY) !== COORDS_VERSION) {
@@ -20,8 +20,16 @@
         localStorage.removeItem("manualOverrides");
         localStorage.setItem(COORDS_VERSION_KEY, COORDS_VERSION);
       }
-    } catch { /* localStorage unavailable — ignore */ }
+    } catch { /* localStorage nicht verfügbar — ignorieren */ }
   })();
+
+  const STYLE_LABELS = {
+    Modernism: "Moderne",
+    Bauhaus: "Bauhaus",
+    "Post-war": "Nachkriegszeit",
+    Contemporary: "Zeitgenössisch",
+    Sacred: "Sakralbau"
+  };
 
   const state = {
     position: null,
@@ -33,19 +41,18 @@
     markers: new Map(),
     userMarker: null,
     userCircle: null,
-    manual: false,
     filter: "all",
     firstFix: false
   };
 
-  // ─── Anchor offset ───────────────────────────────────────
+  // ─── Anker-Offset ───────────────────────────────────────
   function loadAnchorOffset() {
     try {
       const raw = localStorage.getItem(ANCHOR_KEY);
       if (!raw) return null;
       const o = JSON.parse(raw);
       if (typeof o.dLat === "number" && typeof o.dLon === "number") return o;
-    } catch { /* ignore */ }
+    } catch { /* ignorieren */ }
     return null;
   }
   function centroid(points) {
@@ -93,6 +100,7 @@
   const enableLocationLabel = $("enableLocationLabel");
   const enableCompassBtn = $("enableCompass");
   const locationHint = $("locationHint");
+  const backBtn = $("backBtn");
 
   // Modal
   const modal = $("modal");
@@ -107,7 +115,7 @@
   const modalAddress = $("modalAddress");
   const modalCenter = $("modalCenter");
 
-  // Menu
+  // Menü
   const menuBtn = $("menuBtn");
   const menuSheet = $("menuSheet");
   const menuAnchor = $("menuAnchor");
@@ -116,7 +124,7 @@
   const menuEnableCompass = $("menuEnableCompass");
   const menuCoords = $("menuCoords");
 
-  // ─── Geo helpers ─────────────────────────────────────────
+  // ─── Geo-Hilfsfunktionen ─────────────────────────────────
   function haversineMeters(a, b) {
     const R = 6371008.8;
     const toRad = (d) => (d * Math.PI) / 180;
@@ -146,8 +154,9 @@
     if (m < 1000) return `${Math.round(m)} m`;
     return `${(m / 1000).toFixed(2)} km`;
   }
+  function styleLabel(s) { return STYLE_LABELS[s] || s; }
 
-  // ─── Illustrations (re-used SVG compositions) ────────────
+  // ─── Illustrationen (SVG-Kompositionen) ──────────────────
   function illustration(b) {
     const [light, mid, dark] = b.palette;
     const tag = b.illustration;
@@ -274,8 +283,8 @@
     return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">${sky}${C[tag] || ""}</svg>`;
   }
 
-  // Split each long description into "about" (first half) and "detail"
-  // (last sentence) so the modal can render two distinct pastel cards.
+  // Lange Beschreibung in "Über" (Anfang) und "Detail" (letzter Satz)
+  // aufteilen, damit das Modal zwei distincte Pastellkarten hat.
   function splitText(text) {
     const sentences = text.match(/[^.!?]+[.!?]/g) || [text];
     if (sentences.length <= 1) return { about: text.trim(), detail: "" };
@@ -283,11 +292,10 @@
     return { about: sentences.join(" ").trim(), detail };
   }
 
-  // ─── Cards ───────────────────────────────────────────────
+  // ─── Karten ──────────────────────────────────────────────
   function buildingMatchesFilter(b) {
     if (state.filter === "all") return true;
-    const tag = b.style.toLowerCase();
-    return tag === state.filter;
+    return b.style.toLowerCase() === state.filter;
   }
 
   function renderCards() {
@@ -310,18 +318,18 @@
         <div class="card-body">
           <div>
             <h3 class="card-title">${b.name}</h3>
-            <p class="card-meta">${b.style} · ${b.year}<br><strong>${b.architect}</strong></p>
+            <p class="card-meta">${styleLabel(b.style)} · ${b.year}<br><strong>${b.architect}</strong></p>
           </div>
           <div class="card-foot">
-            <span class="card-dist">Distance: <strong>${distLabel}</strong></span>
-            <button class="view-btn" type="button">View Details</button>
+            <span class="card-dist">Distanz: <strong>${distLabel}</strong></span>
+            <button class="view-btn" type="button">Details</button>
           </div>
         </div>
         <div class="lock-badge">${discovered ? "★" : "✦"}</div>`;
       el.addEventListener("click", () => openModal(b));
       cardsEl.appendChild(el);
     });
-    visibleCount.textContent = `${shown} of ${BUILDINGS.length}`;
+    visibleCount.textContent = `${shown} von ${BUILDINGS.length}`;
     discoveredCount.textContent = state.discovered.size;
     statDiscovered.textContent = state.discovered.size;
     totalCount.textContent = BUILDINGS.length;
@@ -331,14 +339,15 @@
   let activeModalId = null;
   function openModal(b) {
     activeModalId = b.id;
-    // Opening the modal is a user tap — a guaranteed gesture, so retry
-    // any haptic the geolocation callback wasn't allowed to fire.
+    // Ein Tap zum Öffnen des Modals ist eine eindeutige Nutzergeste —
+    // ideal, um einen vom Discovery-Callback eventuell verworfenen
+    // Haptik-Impuls nachzuholen.
     consumeHaptic();
     modalTitle.textContent = b.name;
     modalFigure.innerHTML = illustration(b);
     modalYear.textContent = b.year;
     modalArch.textContent = b.architect;
-    modalStyle.textContent = b.style;
+    modalStyle.textContent = styleLabel(b.style);
     modalAddress.textContent = b.address;
 
     const discovered = state.discovered.has(b.id);
@@ -353,30 +362,42 @@
       }
     } else {
       modalAbout.textContent =
-        "This entry unlocks when you walk within 30 metres of the building. " +
-        "Allow location to begin discovering — the compass arrow on the map " +
-        "always points to the nearest jewel.";
+        "Dieser Eintrag wird freigeschaltet, sobald du dich auf " +
+        DISCOVERY_RADIUS_M + " Meter näherst. Aktiviere den Standort, " +
+        "damit der Pfeil auf das nächstgelegene Juwel zeigt.";
       modalDetailCard.hidden = true;
     }
     modal.hidden = false;
   }
   function closeModal() { modal.hidden = true; activeModalId = null; }
+
+  // Klicks auf data-close überall im Modal (auch auf SVGs innerhalb des
+  // Zurück-Buttons) zuverlässig abfangen, indem wir bis zum nächsten
+  // Vorfahren mit dem Attribut hochsuchen.
   modal.addEventListener("click", (e) => {
-    if (e.target.dataset.close !== undefined) closeModal();
+    if (e.target.closest("[data-close]")) closeModal();
   });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       if (!modal.hidden) closeModal();
-      if (!menuSheet.hidden) closeMenu();
+      else if (!menuSheet.hidden) closeMenu();
     }
   });
   modalCenter.addEventListener("click", () => {
     if (activeModalId == null) return;
     const b = BUILDINGS.find((x) => x.id === activeModalId);
     if (b && state.map) {
-      state.map.flyTo([b.lat, b.lon], 18, { duration: 0.6 });
+      state.map.flyTo([b.lat, b.lon], 19, { duration: 0.6 });
       closeModal();
     }
+  });
+
+  // Top-Bar-Zurück-Button: schließt offenes Sheet / scrollt sonst nach
+  // oben, damit der Pfeil immer eine sichtbare Reaktion auslöst.
+  backBtn.addEventListener("click", () => {
+    if (!modal.hidden) { closeModal(); return; }
+    if (!menuSheet.hidden) { closeMenu(); return; }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
   // ─── Toast ──────────────────────────────────────────────
@@ -389,8 +410,8 @@
       t.className = "toast";
       t.innerHTML = `<span class="toast-icon">★</span><span class="toast-text"></span>`;
       document.body.appendChild(t);
-      // A tap on the toast = a real user gesture: vibrate (if blocked
-      // earlier) and open the freshly-unlocked building.
+      // Tap auf den Toast = echte Nutzergeste: Haptik nachholen und
+      // direkt in den freigeschalteten Eintrag springen.
       t.addEventListener("click", () => {
         consumeHaptic();
         if (toastBuildingId != null) {
@@ -401,24 +422,22 @@
       });
     }
     toastBuildingId = b.id;
-    t.querySelector(".toast-text").textContent = `Unlocked: ${b.name}`;
+    t.querySelector(".toast-text").textContent = `Entdeckt: ${b.name}`;
     t.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove("show"), 3000);
   }
 
-  // Strong two-pulse haptic. Browsers (notably Chrome on Android) gate
-  // navigator.vibrate behind a recent user gesture, so this is also
-  // re-fired whenever the user interacts with anything related to the
-  // discovery (tapping the toast, opening the unlocked modal).
+  // Starker Doppel-Impuls bei einer neuen Entdeckung. Chrome auf
+  // Android blockiert navigator.vibrate ohne kürzliche Nutzergeste —
+  // deshalb merken wir den ausstehenden Impuls und holen ihn beim
+  // nächsten Tap nach.
   const VIBRATION_PATTERN = [220, 90, 360];
   function vibrate(pattern) {
     if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return false;
     try { return navigator.vibrate(pattern || VIBRATION_PATTERN); }
     catch (e) { return false; }
   }
-  // Track the most recent discovery so a subsequent user gesture can
-  // retry the haptic if the browser silently swallowed the auto-fire.
   let pendingHaptic = false;
   function vibrateDiscovery() {
     pendingHaptic = true;
@@ -429,7 +448,7 @@
     if (vibrate(VIBRATION_PATTERN)) pendingHaptic = false;
   }
 
-  // ─── Map ────────────────────────────────────────────────
+  // ─── Karte ──────────────────────────────────────────────
   function initMap() {
     state.map = L.map("map", {
       zoomControl: false,
@@ -439,7 +458,7 @@
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(state.map);
 
     BUILDINGS.forEach((b) => {
@@ -457,9 +476,6 @@
 
     const group = new L.featureGroup(Array.from(state.markers.values()));
     state.map.fitBounds(group.getBounds().pad(0.35));
-
-    // Long-press / right-click → manual position (kept as a backup)
-    state.map.on("contextmenu", (e) => setManualPosition(e.latlng));
   }
 
   function updateMarkers() {
@@ -495,17 +511,6 @@
     }
   }
 
-  function setManualPosition(latlng) {
-    if (state.watchId != null) {
-      navigator.geolocation.clearWatch(state.watchId);
-      state.watchId = null;
-    }
-    state.manual = true;
-    state.position = [latlng.lat, latlng.lng];
-    state.heading = null;
-    onPositionUpdate();
-  }
-
   // ─── Geolocation ─────────────────────────────────────────
   function showHint(html, isError) {
     locationHint.hidden = false;
@@ -523,28 +528,30 @@
   function geoErrorHint(err) {
     if (err.code === 1) {
       return (
-        "Location permission was denied. Tap the <strong>lock or site-info icon</strong> " +
-        "in the address bar → set <em>Location</em> to <em>Allow</em> → reload. On iOS " +
-        "also check <em>Settings → Safari → Location</em>."
+        "Standortberechtigung wurde verweigert. Öffne das " +
+        "<strong>Schloss- oder Info-Symbol</strong> in der Adressleiste, " +
+        "stelle <em>Standort</em> auf <em>Erlauben</em> und lade die Seite " +
+        "neu. Unter iOS zusätzlich <em>Einstellungen → Safari → Standort</em> " +
+        "prüfen."
       );
     }
     if (err.code === 2) {
-      return "Your device couldn't get a GPS fix. Step outside and try again.";
+      return "Dein Gerät konnte keinen GPS-Fix erhalten. Versuche es draussen erneut.";
     }
-    return "Took too long to locate you. Try again.";
+    return "Die Standortbestimmung hat zu lange gedauert. Bitte erneut versuchen.";
   }
 
   function startGeolocation() {
     if (!("geolocation" in navigator)) {
-      showHint("This browser does not support geolocation.", true);
+      showHint("Dieser Browser unterstützt keine Standortbestimmung.", true);
       return;
     }
     if (!isSecureish()) {
-      showHint("Geolocation needs <strong>HTTPS</strong> (or localhost).", true);
+      showHint("Standortbestimmung benötigt <strong>HTTPS</strong> (oder localhost).", true);
       return;
     }
     hideHint();
-    enableLocationLabel.textContent = "Locating…";
+    enableLocationLabel.textContent = "Suche Standort …";
     enableLocationBtn.disabled = true;
 
     navigator.geolocation.getCurrentPosition(
@@ -558,7 +565,6 @@
     );
   }
   function applyPosition(pos) {
-    state.manual = false;
     state.position = [pos.coords.latitude, pos.coords.longitude];
     if (typeof pos.coords.heading === "number" && !isNaN(pos.coords.heading)) {
       state.heading = pos.coords.heading;
@@ -567,7 +573,7 @@
   }
   function handleGeoError(err) {
     enableLocationBtn.disabled = false;
-    enableLocationLabel.textContent = "Enable location";
+    enableLocationLabel.textContent = "Standort aktivieren";
     showHint(geoErrorHint(err), true);
   }
   function startWatch() {
@@ -581,7 +587,7 @@
 
   function onPositionUpdate() {
     enableLocationBtn.disabled = false;
-    enableLocationLabel.textContent = state.manual ? "Manual position" : "Re-centre";
+    enableLocationLabel.textContent = "Zentrieren";
     updateUserPosition();
     updateCoordsReadout();
 
@@ -612,11 +618,11 @@
     discoveredCount.textContent = state.discovered.size;
     statDiscovered.textContent = state.discovered.size;
     updateMarkers();
-    renderCards(); // refresh distances on cards
+    renderCards();
 
     if (!state.firstFix) {
       state.firstFix = true;
-      state.map.setView(state.position, 18);
+      state.map.setView(state.position, 19);
     }
   }
 
@@ -627,14 +633,14 @@
   }
 
   enableLocationBtn.addEventListener("click", () => {
-    if (state.watchId == null && !state.manual) {
+    if (state.watchId == null) {
       startGeolocation();
     } else if (state.position) {
-      state.map.flyTo(state.position, 18, { duration: 0.6 });
+      state.map.flyTo(state.position, 19, { duration: 0.6 });
     }
   });
 
-  // ─── Compass ─────────────────────────────────────────────
+  // ─── Kompass ─────────────────────────────────────────────
   let compassEventsSeen = false;
   function bindCompass() {
     const apply = (e) => {
@@ -661,14 +667,14 @@
           typeof DeviceOrientationEvent.requestPermission === "function") {
         const res = await DeviceOrientationEvent.requestPermission();
         if (res !== "granted") {
-          showHint("Compass permission was denied. The arrow will still use GPS heading when you move.", true);
+          showHint("Kompass-Berechtigung wurde verweigert. Der Pfeil nutzt weiterhin die GPS-Bewegungsrichtung.", true);
           return;
         }
       }
       bindCompass();
       setTimeout(() => {
         if (!compassEventsSeen) {
-          showHint("No compass sensor detected. The arrow will use GPS movement direction.", false);
+          showHint("Kein Kompass-Sensor erkannt. Der Pfeil nutzt die GPS-Bewegungsrichtung, sobald du dich bewegst.", false);
         }
       }, 1500);
     } catch (e) {
@@ -678,7 +684,7 @@
   enableCompassBtn.addEventListener("click", requestCompass);
   menuEnableCompass.addEventListener("click", () => { requestCompass(); closeMenu(); });
 
-  // ─── Style filter pills ─────────────────────────────────
+  // ─── Stilfilter-Pillen ──────────────────────────────────
   document.querySelectorAll(".style-pill").forEach((btn) => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".style-pill").forEach((b) => b.classList.remove("active"));
@@ -688,16 +694,16 @@
     });
   });
 
-  // ─── Menu sheet ─────────────────────────────────────────
+  // ─── Menü-Sheet ──────────────────────────────────────────
   function openMenu() { menuSheet.hidden = false; }
   function closeMenu() { menuSheet.hidden = true; }
   menuBtn.addEventListener("click", openMenu);
   menuSheet.addEventListener("click", (e) => {
-    if (e.target.dataset.menuClose !== undefined) closeMenu();
+    if (e.target.closest("[data-menu-close]")) closeMenu();
   });
   menuAnchor.addEventListener("click", () => {
     if (!state.position) {
-      showHint("Need a position first — enable location, or long-press the map.", true);
+      showHint("Es wird zuerst ein Standort benötigt — bitte den Standort aktivieren.", true);
       closeMenu();
       return;
     }
@@ -705,7 +711,7 @@
     refreshMarkers();
     menuResetRow.hidden = false;
     closeMenu();
-    showToast({ name: "Buildings anchored to your position" });
+    showToast({ id: -1, name: "Gebäude an deinen Standort verankert" });
   });
   menuResetAnchor.addEventListener("click", () => {
     clearAnchor();
@@ -738,12 +744,12 @@
     statDiscovered.textContent = state.discovered.size;
 
     if (state.discovered.size === 0) {
-      closestName.textContent = "Allow location to begin";
+      closestName.textContent = "Standort aktivieren, um zu beginnen";
       closestDist.textContent = "—";
     }
 
     if (!isSecureish()) {
-      showHint("Geolocation needs <strong>HTTPS</strong> (or localhost).", true);
+      showHint("Standortbestimmung benötigt <strong>HTTPS</strong> (oder localhost).", true);
     }
   }
   document.addEventListener("DOMContentLoaded", boot);

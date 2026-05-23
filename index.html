@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#c5dcd6" />
-  <title>Architekturführer Basel — City Guide</title>
+  <title>Architekturführer Basel — Stadtführer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" />
@@ -14,14 +14,14 @@
 <body>
   <header class="topbar">
     <div class="topbar-side">
-      <button class="icon-btn" aria-label="Back" type="button">
+      <button class="icon-btn" id="backBtn" aria-label="Zurück" type="button">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <h1 class="brand-title">City Guide</h1>
+      <h1 class="brand-title">Stadtführer</h1>
     </div>
     <div class="topbar-side">
       <div class="avatar" aria-hidden="true">AB</div>
-      <button class="icon-btn" id="menuBtn" aria-label="More" type="button">
+      <button class="icon-btn" id="menuBtn" aria-label="Mehr" type="button">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
       </button>
     </div>
@@ -33,7 +33,7 @@
         <path d="M12 3 L17 18 L12 15 L7 18 Z" fill="currentColor"/>
       </svg>
     </span>
-    <span><span class="closest-prefix">Closest:</span> <strong id="closestName">Allow location to begin</strong></span>
+    <span><span class="closest-prefix">Nächstes:</span> <strong id="closestName">Standort aktivieren, um zu beginnen</strong></span>
     <span class="closest-dist" id="closestDist">—</span>
   </div>
 
@@ -41,46 +41,46 @@
     <section class="hero">
       <div class="map-frame">
         <div id="map"></div>
-        <div class="map-overlay"><strong id="discoveredCount">0</strong>/<span id="totalCount">11</span> discovered</div>
+        <div class="map-overlay"><strong id="discoveredCount">0</strong>/<span id="totalCount">11</span> entdeckt</div>
         <div class="fab-row">
           <button class="fab primary" id="enableLocation" type="button">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-            <span id="enableLocationLabel">Enable location</span>
+            <span id="enableLocationLabel">Standort aktivieren</span>
           </button>
-          <button class="fab" id="enableCompass" type="button" hidden>Compass</button>
+          <button class="fab" id="enableCompass" type="button" hidden>Kompass</button>
         </div>
       </div>
       <div class="hero-meta">
         <div>
-          <p class="location-label">Current Location</p>
+          <p class="location-label">Aktueller Standort</p>
           <h2 class="location-name">Biel, Lötschental</h2>
         </div>
       </div>
     </section>
 
-    <section class="stats" aria-label="Stats">
+    <section class="stats" aria-label="Übersicht">
       <div class="stat-card">
         <span class="stat-num" id="statDiscovered">0</span>
-        <span class="stat-label"><strong>Buildings</strong>discovered</span>
+        <span class="stat-label"><strong>Gebäude</strong>entdeckt</span>
       </div>
       <div class="stat-card">
         <span class="stat-num">11</span>
-        <span class="stat-label"><strong>Hidden gems</strong>along Weritzalpstrasse</span>
+        <span class="stat-label"><strong>Geheimtipps</strong>entlang der Weritzalpstrasse</span>
       </div>
     </section>
 
-    <div class="style-row" role="tablist" aria-label="Style filter">
-      <button class="style-pill active" data-filter="all" role="tab">All</button>
-      <button class="style-pill" data-filter="modernism" role="tab">Modernism</button>
+    <div class="style-row" role="tablist" aria-label="Stilfilter">
+      <button class="style-pill active" data-filter="all" role="tab">Alle</button>
+      <button class="style-pill" data-filter="modernism" role="tab">Moderne</button>
       <button class="style-pill" data-filter="bauhaus" role="tab">Bauhaus</button>
-      <button class="style-pill" data-filter="post-war" role="tab">Post-war</button>
-      <button class="style-pill" data-filter="contemporary" role="tab">Contemporary</button>
-      <button class="style-pill" data-filter="sacred" role="tab">Sacred</button>
+      <button class="style-pill" data-filter="post-war" role="tab">Nachkriegszeit</button>
+      <button class="style-pill" data-filter="contemporary" role="tab">Zeitgenössisch</button>
+      <button class="style-pill" data-filter="sacred" role="tab">Sakralbau</button>
     </div>
 
     <div class="section-head">
-      <h2>Nearby Buildings</h2>
-      <span class="count" id="visibleCount">11 of 11</span>
+      <h2>Gebäude in der Nähe</h2>
+      <span class="count" id="visibleCount">11 von 11</span>
     </div>
     <div class="cards" id="cards"></div>
 
@@ -88,15 +88,15 @@
   </main>
 
   <footer class="footer">
-    Designed for the eleven houses of Bieli (Lötschental) — eleven hidden masterpieces of Basel architecture, re-projected onto a Walliser hamlet.
+    Elf versteckte Meisterwerke der Basler Architektur — projiziert auf die elf Häuser des Walliser Weilers Bieli (Lötschental).
   </footer>
 
-  <!-- Discovery / detail sheet -->
+  <!-- Detail-Sheet -->
   <div class="modal" id="modal" hidden>
     <div class="modal-backdrop" data-close></div>
     <article class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <header class="modal-header">
-        <button class="icon-btn" data-close aria-label="Back" type="button">
+        <button class="icon-btn" data-close aria-label="Zurück" type="button">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <h3 id="modalTitle">—</h3>
@@ -106,71 +106,71 @@
         <div class="modal-figure" id="modalFigure"></div>
         <div class="fact-row">
           <div class="fact">
-            <p class="fact-label">Built</p>
+            <p class="fact-label">Erbaut</p>
             <p class="fact-value" id="modalYear">—</p>
           </div>
           <div class="fact">
-            <p class="fact-label">Architect</p>
+            <p class="fact-label">Architekt</p>
             <p class="fact-value" id="modalArch">—</p>
           </div>
           <div class="fact">
-            <p class="fact-label">Style</p>
+            <p class="fact-label">Stil</p>
             <p class="fact-value" id="modalStyle">—</p>
           </div>
         </div>
         <div class="info-card lilac">
           <span class="info-icon" aria-hidden="true">i</span>
           <div class="info-body">
-            <p class="info-title">About</p>
+            <p class="info-title">Über</p>
             <p class="info-text" id="modalAbout">—</p>
           </div>
         </div>
         <div class="info-card purple" id="modalDetailCard">
           <span class="info-icon" aria-hidden="true">★</span>
           <div class="info-body">
-            <p class="info-title">Hidden detail</p>
+            <p class="info-title">Architektonisches Detail</p>
             <p class="info-text" id="modalDetail">—</p>
           </div>
         </div>
         <div class="info-card yellow">
           <span class="info-icon" aria-hidden="true">📍</span>
           <div class="info-body">
-            <p class="info-title">Address</p>
+            <p class="info-title">Adresse</p>
             <p class="info-text" id="modalAddress">—</p>
           </div>
         </div>
       </div>
       <div class="modal-cta">
-        <button class="cta-btn muted" data-close type="button">Close</button>
-        <button class="cta-btn" id="modalCenter" type="button">Show on map</button>
+        <button class="cta-btn muted" data-close type="button">Schließen</button>
+        <button class="cta-btn" id="modalCenter" type="button">Auf Karte zeigen</button>
       </div>
     </article>
   </div>
 
-  <!-- Overflow menu (••• in topbar) -->
+  <!-- Überlaufmenü (••• in der Topbar) -->
   <div class="menu-sheet" id="menuSheet" hidden>
     <div class="modal-backdrop" data-menu-close></div>
-    <div class="menu-card" role="dialog" aria-modal="true" aria-label="Options">
+    <div class="menu-card" role="dialog" aria-modal="true" aria-label="Optionen">
       <div class="menu-grip"></div>
-      <h4>Options</h4>
+      <h4>Optionen</h4>
       <div class="menu-row">
-        <span>Compass sensor</span>
-        <button id="menuEnableCompass" type="button">Enable</button>
+        <span>Kompass-Sensor</span>
+        <button id="menuEnableCompass" type="button">Aktivieren</button>
       </div>
       <div class="menu-row">
-        <span>Re-centre 11 buildings to here</span>
-        <button id="menuAnchor" type="button">Anchor here</button>
+        <span>11 Gebäude hierher zentrieren</span>
+        <button id="menuAnchor" type="button">Hier verankern</button>
       </div>
       <div class="menu-row" id="menuResetRow" hidden>
-        <span>Clear custom anchor</span>
-        <button id="menuResetAnchor" type="button">Reset</button>
+        <span>Verankerung löschen</span>
+        <button id="menuResetAnchor" type="button">Zurücksetzen</button>
       </div>
       <div class="menu-row">
-        <span>Live GPS</span>
+        <span>Live-GPS</span>
         <code id="menuCoords">—</code>
       </div>
       <div class="menu-row">
-        <button class="primary" data-menu-close type="button" style="width:100%;">Done</button>
+        <button class="primary" data-menu-close type="button" style="width:100%;">Fertig</button>
       </div>
     </div>
   </div>
