@@ -5,6 +5,23 @@
   const DISCOVERY_RADIUS_M = 30;
   const HAMLET_CENTER = [46.41750, 7.78467];
   const ANCHOR_KEY = "anchorOffset";
+  const COORDS_VERSION = "biel-survey-1";
+  const COORDS_VERSION_KEY = "coordsVersion";
+
+  // One-time migration: the baked-in defaults are now the field-surveyed
+  // coordinates, so any anchor offset or per-building override stored
+  // from an earlier version of the app would shift the markers off the
+  // real houses. Clear them once when the version flag is missing or
+  // stale, then mark this version as applied.
+  (function migrateStaleAnchors() {
+    try {
+      if (localStorage.getItem(COORDS_VERSION_KEY) !== COORDS_VERSION) {
+        localStorage.removeItem(ANCHOR_KEY);
+        localStorage.removeItem("manualOverrides");
+        localStorage.setItem(COORDS_VERSION_KEY, COORDS_VERSION);
+      }
+    } catch { /* localStorage unavailable — ignore */ }
+  })();
 
   const state = {
     position: null,
