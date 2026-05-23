@@ -3,7 +3,8 @@
   "use strict";
 
   const DISCOVERY_RADIUS_M = 30;
-  const HAMLET_CENTER = [46.40880, 7.87405];
+  const HAMLET_CENTER = [46.41349, 7.87248];
+  const ANCHOR_KEY = "anchorOffset";
 
   const state = {
     position: null,
@@ -19,6 +20,51 @@
     manual: false
   };
 
+  // ─── Anchor offset ───────────────────────────────────────
+  // The user can press "Anchor here" while standing in the real hamlet;
+  // we record the delta between their GPS position and the geometric
+  // centroid of the eleven buildings, then apply that delta on every
+  // load so the markers sit on the real houses.
+  function loadAnchorOffset() {
+    try {
+      const raw = localStorage.getItem(ANCHOR_KEY);
+      if (!raw) return null;
+      const o = JSON.parse(raw);
+      if (typeof o.dLat === "number" && typeof o.dLon === "number") return o;
+    } catch { /* ignore */ }
+    return null;
+  }
+  function centroid(points) {
+    let lat = 0, lon = 0;
+    for (const p of points) { lat += p[0]; lon += p[1]; }
+    return [lat / points.length, lon / points.length];
+  }
+  function applyAnchorOffset() {
+    const off = loadAnchorOffset();
+    if (!off) return;
+    for (const b of BUILDINGS) {
+      b.lat = b._origLat + off.dLat;
+      b.lon = b._origLon + off.dLon;
+    }
+  }
+  function rememberOriginalCoords() {
+    for (const b of BUILDINGS) {
+      if (b._origLat === undefined) { b._origLat = b.lat; b._origLon = b.lon; }
+    }
+  }
+  function setAnchorFromPosition(pos) {
+    rememberOriginalCoords();
+    const c = centroid(BUILDINGS.map((b) => [b._origLat, b._origLon]));
+    const offset = { dLat: pos[0] - c[0], dLon: pos[1] - c[1] };
+    localStorage.setItem(ANCHOR_KEY, JSON.stringify(offset));
+    applyAnchorOffset();
+  }
+  function clearAnchor() {
+    localStorage.removeItem(ANCHOR_KEY);
+    rememberOriginalCoords();
+    for (const b of BUILDINGS) { b.lat = b._origLat; b.lon = b._origLon; }
+  }
+
   // ─── DOM ─────────────────────────────────────────────────
   const $ = (id) => document.getElementById(id);
   const statusEl = $("status");
@@ -31,6 +77,9 @@
   const enableLocationBtn = $("enableLocation");
   const enableCompassBtn = $("enableCompass");
   const demoWalkBtn = $("demoWalk");
+  const anchorBtn = $("anchorHere");
+  const resetAnchorBtn = $("resetAnchor");
+  const coordsEl = $("coords");
   const locationHint = $("locationHint");
   const discoveredCount = $("discoveredCount");
   const totalCount = $("totalCount");
@@ -503,6 +552,8 @@
     enableLocationBtn.textContent =
       (state.demo.active || state.manual) ? "Enable location" : "Tracking — re-centre";
     enableLocationBtn.disabled = false;
+    updateCoordsReadout();
+    anchorBtn.disabled = false;
     updateUserPosition();
 
     // Find nearest
@@ -548,6 +599,50 @@
     if (m < 1000) return `${Math.round(m)} m`;
     return `${(m / 1000).toFixed(2)} km`;
   }
+
+  function updateCoordsReadout() {
+    if (!state.position) { coordsEl.hidden = true; return; }
+    coordsEl.hidden = false;
+    coordsEl.textContent =
+      `${state.position[0].toFixed(5)}, ${state.position[1].toFixed(5)}`;
+  }
+
+  // ─── Anchor button handlers ─────────────────────────────
+  function refitMap() {
+    if (!state.map) return;
+    const group = new L.featureGroup(Array.from(state.markers.values()));
+    state.map.flyToBounds(group.getBounds().pad(0.3), { duration: 0.6 });
+  }
+  function refreshMarkerPositions() {
+    state.markers.forEach((m, id) => {
+      const b = BUILDINGS.find((x) => x.id === id);
+      if (b) m.setLatLng([b.lat, b.lon]);
+    });
+  }
+
+  anchorBtn.disabled = true;
+  anchorBtn.addEventListener("click", () => {
+    if (!state.position) {
+      showHint("Need a position first — enable location, start the demo walk, or long-press the map.", true);
+      return;
+    }
+    setAnchorFromPosition(state.position);
+    refreshMarkerPositions();
+    refitMap();
+    resetAnchorBtn.hidden = false;
+    showHint(
+      "Anchored. The 11 buildings are now centred on your current position. " +
+      "If you walk to the actual house of any building, you can re-anchor again to sharpen the fit.",
+      false
+    );
+  });
+  resetAnchorBtn.addEventListener("click", () => {
+    clearAnchor();
+    refreshMarkerPositions();
+    refitMap();
+    resetAnchorBtn.hidden = true;
+    showHint("Anchor cleared — using default Biel coordinates.", false);
+  });
 
   // Recenter button reuses the same button after geolocation starts
   enableLocationBtn.addEventListener("click", () => {
@@ -679,6 +774,9 @@
 
   // ─── Boot ───────────────────────────────────────────────
   function boot() {
+    rememberOriginalCoords();
+    applyAnchorOffset();
+    if (loadAnchorOffset()) resetAnchorBtn.hidden = false;
     renderCards();
     initMap();
 
