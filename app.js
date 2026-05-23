@@ -3,7 +3,7 @@
   "use strict";
 
   const DISCOVERY_RADIUS_M = 30;
-  const HAMLET_CENTER = [46.41349, 7.87248];
+  const HAMLET_CENTER = [46.41750, 7.78467];
   const ANCHOR_KEY = "anchorOffset";
   const OVERRIDES_KEY = "manualOverrides";
 

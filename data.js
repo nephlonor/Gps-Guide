@@ -1,14 +1,11 @@
 /* eslint-disable */
 // Eleven hidden architectural jewels of Basel, projected onto the eleven
 // houses of the Biel hamlet in Lötschental (canton Valais), accessed by
-// the Weritzalpstrasse. The default coordinates below place the markers
-// inside the ~60 m hamlet polygon labelled "Biel" on OSM.
+// the Weritzalpstrasse.
 //
-// These coordinates are a visual estimate. Use the "Anchor 11 buildings
-// here" button in the app to re-centre them around your live GPS
-// position — the offset is stored in localStorage and applied on every
-// load, so the eleven buildings can be lined up with the real houses
-// without a code change.
+// Coordinates below were placed in the field with the in-app edit mode:
+// each marker dragged onto its matching house, then exported via
+// "Copy coordinates". Centroid sits at roughly 46.41750° N, 7.78467° E.
 
 window.BUILDINGS = [
   {
@@ -17,8 +14,8 @@ window.BUILDINGS = [
     architect: "Hans Bernoulli",
     year: 1925,
     address: "Bruderholzallee, Basel",
-    lat: 46.413700,
-    lon: 7.872310,
+    lat: 46.417715,
+    lon: 7.784512,
     illustration: "watertower",
     palette: ["#d9c9a8", "#8a6f44", "#3a2e22"],
     text:
@@ -35,8 +32,8 @@ window.BUILDINGS = [
     architect: "Karl Moser",
     year: 1927,
     address: "Kannenfeldstrasse 35",
-    lat: 46.413640,
-    lon: 7.872400,
+    lat: 46.417783,
+    lon: 7.784615,
     illustration: "antonius",
     palette: ["#9c9388", "#5a5247", "#2f2a23"],
     text:
@@ -53,8 +50,8 @@ window.BUILDINGS = [
     architect: "Karl Egender",
     year: 1936,
     address: "Luzernerring 89",
-    lat: 46.413590,
-    lon: 7.872510,
+    lat: 46.417676,
+    lon: 7.784910,
     illustration: "lukas",
     palette: ["#ddd2bb", "#7c6b51", "#352c23"],
     text:
@@ -71,8 +68,8 @@ window.BUILDINGS = [
     architect: "Miller & Maranta",
     year: 2000,
     address: "Wasgenring 100",
-    lat: 46.413540,
-    lon: 7.872350,
+    lat: 46.417781,
+    lon: 7.785107,
     illustration: "volta",
     palette: ["#c9b88b", "#7d6a3f", "#3a2f1e"],
     text:
@@ -88,8 +85,8 @@ window.BUILDINGS = [
     architect: "Diener & Diener",
     year: 1985,
     address: "St. Johanns-Vorstadt",
-    lat: 46.413510,
-    lon: 7.872480,
+    lat: 46.417850,
+    lon: 7.785248,
     illustration: "davidsboden",
     palette: ["#e3d4b7", "#a98a5d", "#3d3225"],
     text:
@@ -105,8 +102,8 @@ window.BUILDINGS = [
     architect: "Hannes Meyer",
     year: 1924,
     address: "Schwarzwaldallee",
-    lat: 46.413470,
-    lon: 7.872600,
+    lat: 46.417488,
+    lon: 7.784821,
     illustration: "schudel",
     palette: ["#cfc1a3", "#8a7549", "#332a1d"],
     text:
@@ -122,8 +119,8 @@ window.BUILDINGS = [
     architect: "Suter & Suter",
     year: 1957,
     address: "Sevogelplatz",
-    lat: 46.413430,
-    lon: 7.872420,
+    lat: 46.417156,
+    lon: 7.784594,
     illustration: "pavillon",
     palette: ["#b7a47a", "#6e5b34", "#2d2418"],
     text:
@@ -139,8 +136,8 @@ window.BUILDINGS = [
     architect: "Reinhardt + Co.",
     year: 1979,
     address: "Hechtliacker",
-    lat: 46.413390,
-    lon: 7.872550,
+    lat: 46.417014,
+    lon: 7.784477,
     illustration: "hechtliacker",
     palette: ["#d9c7a0", "#9c7e4a", "#3a2e1c"],
     text:
@@ -156,8 +153,8 @@ window.BUILDINGS = [
     architect: "Miller & Maranta",
     year: 2004,
     address: "Schwarzpark, Gellertstrasse",
-    lat: 46.413350,
-    lon: 7.872680,
+    lat: 46.417241,
+    lon: 7.784366,
     illustration: "schwarzpark",
     palette: ["#a89878", "#62543a", "#2c241a"],
     text:
@@ -173,8 +170,8 @@ window.BUILDINGS = [
     architect: "Buchner Bründler",
     year: 2011,
     address: "Dreiländereck, Kleinhüningen",
-    lat: 46.413310,
-    lon: 7.872460,
+    lat: 46.417353,
+    lon: 7.784446,
     illustration: "buvette",
     palette: ["#bca982", "#6a5635", "#2a2117"],
     text:
@@ -190,8 +187,8 @@ window.BUILDINGS = [
     architect: "Hermann Baur",
     year: 1949,
     address: "Brunngässlein 12",
-    lat: 46.413270,
-    lon: 7.872590,
+    lat: 46.417494,
+    lon: 7.784219,
     illustration: "brunngaesslein",
     palette: ["#cbb98a", "#7d6839", "#332919"],
     text:
