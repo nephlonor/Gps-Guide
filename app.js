@@ -3,7 +3,7 @@
   "use strict";
 
   const DISCOVERY_RADIUS_M = 30;
-  const HAMLET_CENTER = [46.40835, 7.87148];
+  const HAMLET_CENTER = [46.40880, 7.87405];
 
   const state = {
     position: null,
@@ -15,7 +15,8 @@
     markers: new Map(),
     userMarker: null,
     userCircle: null,
-    demo: { active: false, raf: null, t0: 0, route: [] }
+    demo: { active: false, raf: null, t0: 0, route: [] },
+    manual: false
   };
 
   // ─── DOM ─────────────────────────────────────────────────
@@ -327,6 +328,32 @@
     // Fit to all buildings on first load
     const group = new L.featureGroup(Array.from(state.markers.values()));
     state.map.fitBounds(group.getBounds().pad(0.35));
+
+    // Manual position fallback: long-press / right-click on the map to drop
+    // a simulated position there. Useful when GPS is denied or unavailable.
+    state.map.on("contextmenu", (e) => setManualPosition(e.latlng));
+    let pressTimer = null;
+    state.map.on("mousedown touchstart", (e) => {
+      if (state.demo.active) return;
+      pressTimer = setTimeout(() => {
+        if (e.latlng) setManualPosition(e.latlng);
+      }, 650);
+    });
+    state.map.on("mouseup mouseout touchend touchmove dragstart zoomstart", () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+    });
+  }
+
+  function setManualPosition(latlng) {
+    if (state.watchId != null) {
+      navigator.geolocation.clearWatch(state.watchId);
+      state.watchId = null;
+    }
+    if (state.demo.active) stopDemoWalk();
+    state.manual = true;
+    state.position = [latlng.lat, latlng.lng];
+    state.heading = null;
+    onPositionUpdate();
   }
 
   function updateMarkers() {
@@ -376,34 +403,31 @@
       location.hostname === "127.0.0.1";
   }
 
-  async function checkPermission() {
-    if (!("permissions" in navigator)) return "unknown";
-    try {
-      const r = await navigator.permissions.query({ name: "geolocation" });
-      return r.state; // 'granted' | 'prompt' | 'denied'
-    } catch { return "unknown"; }
+  function geoErrorHint(err) {
+    if (err.code === 1) {
+      return (
+        "Location permission was denied. To enable it: tap the <strong>lock " +
+        "or site-info icon</strong> next to the address bar → set " +
+        "<em>Location</em> to <em>Allow</em> → reload the page. On iOS also " +
+        "check <em>Settings → Safari → Location</em>. Meanwhile, try " +
+        "<strong>Start demo walk</strong>."
+      );
+    }
+    if (err.code === 2) {
+      return "Your device couldn't get a GPS fix. Step outside or try <strong>Start demo walk</strong>.";
+    }
+    return "Took too long to locate you. Try again, or use <strong>Start demo walk</strong>.";
   }
 
-  async function startGeolocation() {
+  function startGeolocation() {
     if (!("geolocation" in navigator)) {
       setStatus("warn", "Geolocation unavailable");
-      showHint("This browser does not support geolocation. Use <strong>Start demo walk</strong> to explore the app.", true);
+      showHint("This browser does not support geolocation. Use <strong>Start demo walk</strong>.", true);
       return;
     }
     if (!isSecureish()) {
       setStatus("warn", "HTTPS required");
-      showHint("Geolocation needs <strong>HTTPS</strong> (or localhost). Use <strong>Start demo walk</strong> to explore the app.", true);
-      return;
-    }
-
-    const perm = await checkPermission();
-    if (perm === "denied") {
-      setStatus("warn", "Location denied");
-      showHint(
-        "Location is blocked for this site. Click the <strong>lock / site-info icon</strong> next to the address bar, " +
-        "set <em>Location</em> to <em>Allow</em>, then reload. Until then, try <strong>Start demo walk</strong>.",
-        true
-      );
+      showHint("Geolocation needs <strong>HTTPS</strong> (or localhost). Use <strong>Start demo walk</strong>.", true);
       return;
     }
 
@@ -412,35 +436,55 @@
     enableLocationBtn.disabled = true;
     enableLocationBtn.textContent = "Locating…";
 
-    state.watchId = navigator.geolocation.watchPosition(
+    // Force the browser to surface its permission prompt with a one-shot
+    // call before starting the watch — many browsers ignore watchPosition
+    // when the permission state is stale.
+    navigator.geolocation.getCurrentPosition(
       (pos) => {
-        if (state.demo.active) return; // demo overrides live
-        state.position = [pos.coords.latitude, pos.coords.longitude];
-        if (typeof pos.coords.heading === "number" && !isNaN(pos.coords.heading)) {
-          state.heading = pos.coords.heading;
-        }
-        onPositionUpdate();
+        applyPosition(pos);
+        startWatch();
       },
       (err) => {
-        console.warn(err);
-        enableLocationBtn.disabled = false;
-        enableLocationBtn.textContent = "Enable location";
-        if (err.code === 1) {
-          setStatus("warn", "Location denied");
-          showHint(
-            "Location permission was denied. Click the <strong>lock / site-info icon</strong> in the address bar, " +
-            "reset the <em>Location</em> permission, and reload. Or use <strong>Start demo walk</strong>.",
-            true
-          );
-        } else if (err.code === 2) {
-          setStatus("warn", "Position unavailable");
-          showHint("Your device couldn't get a GPS fix. Try outdoors, or use <strong>Start demo walk</strong>.", true);
-        } else {
-          setStatus("warn", "Location timed out");
-          showHint("Took too long to locate you. Try again, or use <strong>Start demo walk</strong>.", true);
-        }
+        console.warn("getCurrentPosition error", err);
+        // On error code 1 (denied), fall back to demo walk hint. But still try
+        // watchPosition once — some browsers (Firefox on Linux) only respond
+        // via watch after a denial-then-allow flow.
+        if (err.code !== 1) startWatch();
+        else handleGeoError(err);
       },
-      { enableHighAccuracy: true, maximumAge: 1000, timeout: 12000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+    );
+  }
+
+  function applyPosition(pos) {
+    if (state.demo.active) return;
+    state.manual = false;
+    state.position = [pos.coords.latitude, pos.coords.longitude];
+    if (typeof pos.coords.heading === "number" && !isNaN(pos.coords.heading)) {
+      state.heading = pos.coords.heading;
+    }
+    onPositionUpdate();
+  }
+
+  function handleGeoError(err) {
+    enableLocationBtn.disabled = false;
+    enableLocationBtn.textContent = "Enable location";
+    setStatus("warn",
+      err.code === 1 ? "Location denied" :
+      err.code === 2 ? "Position unavailable" : "Location timed out"
+    );
+    showHint(geoErrorHint(err), true);
+  }
+
+  function startWatch() {
+    if (state.watchId != null) return;
+    state.watchId = navigator.geolocation.watchPosition(
+      (pos) => applyPosition(pos),
+      (err) => {
+        console.warn("watchPosition error", err);
+        handleGeoError(err);
+      },
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 }
     );
   }
 
@@ -451,8 +495,13 @@
   }
 
   function onPositionUpdate() {
-    setStatus("live", state.demo.active ? "Demo walk" : "Live location");
-    enableLocationBtn.textContent = state.demo.active ? "Enable location" : "Tracking — re-centre";
+    setStatus("live",
+      state.demo.active ? "Demo walk" :
+      state.manual ? "Manual position" :
+      "Live location"
+    );
+    enableLocationBtn.textContent =
+      (state.demo.active || state.manual) ? "Enable location" : "Tracking — re-centre";
     enableLocationBtn.disabled = false;
     updateUserPosition();
 
@@ -528,6 +577,7 @@
       navigator.geolocation.clearWatch(state.watchId);
       state.watchId = null;
     }
+    state.manual = false;
     state.demo.active = true;
     state.demo.route = buildRoute();
     state.demo.t0 = performance.now();
@@ -573,6 +623,7 @@
   });
 
   // ─── Compass (device orientation) ───────────────────────
+  let compassEventsSeen = false;
   function bindCompass() {
     const apply = (e) => {
       const heading =
@@ -580,6 +631,7 @@
           ? e.webkitCompassHeading
           : (e.alpha != null ? (360 - e.alpha) % 360 : null);
       if (heading != null && !isNaN(heading)) {
+        compassEventsSeen = true;
         state.heading = heading;
         if (state.nearest && state.position) {
           const target = bearingDeg(state.position, [state.nearest.lat, state.nearest.lon]);
@@ -593,52 +645,55 @@
   }
 
   enableCompassBtn.addEventListener("click", async () => {
-    if (typeof DeviceOrientationEvent !== "undefined" &&
-        typeof DeviceOrientationEvent.requestPermission === "function") {
-      try {
+    enableCompassBtn.disabled = true;
+    enableCompassBtn.textContent = "Requesting…";
+    try {
+      if (typeof DeviceOrientationEvent !== "undefined" &&
+          typeof DeviceOrientationEvent.requestPermission === "function") {
         const res = await DeviceOrientationEvent.requestPermission();
-        if (res === "granted") {
-          bindCompass();
+        if (res !== "granted") {
+          showHint("Compass permission was denied. The arrow will still use GPS heading when you move.", true);
+          enableCompassBtn.disabled = false;
+          enableCompassBtn.textContent = "Enable compass";
+          return;
+        }
+      }
+      bindCompass();
+      enableCompassBtn.textContent = "Compass on";
+      // Check after a moment whether events actually arrived
+      setTimeout(() => {
+        if (!compassEventsSeen) {
+          showHint("No compass sensor detected. The arrow will use GPS movement direction when you walk.", false);
+          enableCompassBtn.textContent = "Compass unavailable";
+        } else {
           enableCompassBtn.hidden = true;
         }
-      } catch (e) { console.warn(e); }
-    } else {
-      bindCompass();
-      enableCompassBtn.hidden = true;
+      }, 1500);
+    } catch (e) {
+      console.warn("compass error", e);
+      enableCompassBtn.disabled = false;
+      enableCompassBtn.textContent = "Enable compass";
+      showHint("Could not enable the compass: " + (e && e.message || e), true);
     }
   });
 
   // ─── Boot ───────────────────────────────────────────────
-  async function boot() {
+  function boot() {
     renderCards();
     initMap();
 
-    // iOS Safari needs explicit permission for orientation
-    if (typeof DeviceOrientationEvent !== "undefined" &&
-        typeof DeviceOrientationEvent.requestPermission === "function") {
-      enableCompassBtn.hidden = false;
-    } else {
-      bindCompass();
-    }
+    // Show the compass button unconditionally so users can grant access
+    // on demand on iOS, Android Chrome, and desktop browsers that gate
+    // motion APIs behind a user gesture.
+    enableCompassBtn.hidden = false;
 
     discoveredCount.textContent = state.discovered.size;
     totalCount.textContent = BUILDINGS.length;
     targetName.textContent = "Allow location to begin";
-    targetMeta.textContent = "11 hidden gems within ~120 m";
+    targetMeta.textContent = "11 hidden gems along Weritzalpstrasse";
 
-    // Pre-flight: warn early if location is already denied or HTTPS is missing.
     if (!isSecureish()) {
-      showHint("Geolocation needs <strong>HTTPS</strong> (or localhost). Try <strong>Start demo walk</strong> instead.", true);
-    } else {
-      const perm = await checkPermission();
-      if (perm === "denied") {
-        setStatus("warn", "Location denied");
-        showHint(
-          "Location is blocked for this site. Open the <strong>lock / site-info icon</strong> in the address bar, " +
-          "set <em>Location</em> to <em>Allow</em>, then reload. Or try <strong>Start demo walk</strong>.",
-          true
-        );
-      }
+      showHint("Geolocation needs <strong>HTTPS</strong> (or localhost). Try <strong>Start demo walk</strong>.", true);
     }
   }
 
