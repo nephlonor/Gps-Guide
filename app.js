@@ -41,6 +41,7 @@
     paidUntil: 0,             // timestamp ms
     paidTotal: 0,             // ms total
     countdownTimer: null,
+    warned5min: false,        // 5-Minuten-Popup nur einmal pro Session
 
     // Karte / Standort
     position: null,
@@ -102,13 +103,10 @@
   }
 
   // ════════════════════════════════════════════════════
-  //  DIAL (rotierendes Rad)
+  //  DIAL (rotierendes Rad, direkt der Fingerbewegung folgend)
   // ════════════════════════════════════════════════════
-  // Wir tracken einen absoluten Winkel (Grad). Eine volle Umdrehung
-  // entspricht 60 Minuten — so reichen ca. 6 Umdrehungen für das
-  // Hourly-Maximum, danach wechselt das Modell auf den Tagespass.
-  const DEG_PER_MIN = 6;
-  let dialAccum = 30 * DEG_PER_MIN; // Startwert: 30 min
+  // Mapping: 1° = 1 min. Volle Umdrehung = 360 min = 6 h Maximum.
+  // Tagespass wird über den Quick-Button gewählt.
   let dialLastAngle = null;
   let dialDragging = false;
 
@@ -119,13 +117,6 @@
     const cy = rect.top + rect.height / 2;
     // 0° = oben, im Uhrzeigersinn positiv
     return (Math.atan2(clientX - cx, cy - clientY) * 180 / Math.PI + 360) % 360;
-  }
-
-  function clampMinutes(min) {
-    if (min < 1) return 1;
-    if (min > HOURLY_MAX_MIN + 1) return DAY_PASS_MIN; // Übergang zum Tagespass
-    if (min > HOURLY_MAX_MIN) return HOURLY_MAX_MIN;
-    return min;
   }
 
   function priceFor(minutes) {
@@ -143,26 +134,20 @@
     return `${minutes} min`;
   }
 
-  function applyDial(forceMinutes) {
-    let minutes;
-    if (forceMinutes != null) {
-      dialAccum = forceMinutes * DEG_PER_MIN;
-      minutes = forceMinutes;
-    } else {
-      minutes = Math.round(dialAccum / DEG_PER_MIN);
-    }
-    minutes = clampMinutes(minutes);
-    if (minutes === DAY_PASS_MIN) {
-      dialAccum = Math.max(dialAccum, HOURLY_MAX_MIN * DEG_PER_MIN + 60); // bleibe oberhalb 360 min
-    } else {
-      dialAccum = minutes * DEG_PER_MIN;
-    }
-    state.payMinutes = minutes;
-    state.payIsDayPass = minutes >= DAY_PASS_MIN;
+  function setMinutes(min) {
+    state.payIsDayPass = false;
+    state.payMinutes = Math.max(1, Math.min(HOURLY_MAX_MIN, Math.round(min)));
     renderDial();
   }
-
-  function syncDialFromMinutes(minutes) { applyDial(minutes); }
+  function setDayPass() {
+    state.payIsDayPass = true;
+    state.payMinutes = DAY_PASS_MIN;
+    renderDial();
+  }
+  function syncDialFromMinutes(minutes) {
+    if (minutes >= DAY_PASS_MIN) setDayPass();
+    else setMinutes(minutes);
+  }
 
   function renderDial() {
     const minutes = state.payMinutes;
@@ -177,15 +162,10 @@
     arc.setAttribute("stroke-dashoffset", String(360 - progress));
     arc.classList.toggle("day", isDay);
 
-    // Handle-Position: gleich Winkel im Uhrzeigersinn, 0° = oben.
-    const handleAngle = isDay ? 360 : (minutes / HOURLY_MAX_MIN) * 360;
+    // Handle: bei 1° = 1 min sitzt der Punkt direkt bei `minutes` Grad.
+    const handleAngle = isDay ? 360 : minutes;
     const handle = document.querySelector(".dial-handle");
     const knob = $("dialKnob");
-    const r = knob.getBoundingClientRect().width / 2 - 4;
-    handle.style.transformOrigin = "50% " + (r) + "px";
-    handle.style.transform = `translate(-50%, 0) rotate(${handleAngle}deg) translate(0, 0)`;
-    // Einfacher: über Rotation des Knobs als Container? Nutzen wir hier:
-    handle.style.position = "absolute";
     const rad = (handleAngle - 90) * Math.PI / 180;
     const cx = knob.clientWidth / 2;
     const cy = knob.clientHeight / 2;
@@ -195,12 +175,10 @@
     handle.style.top  = (cy + Math.sin(rad) * radius - 12) + "px";
     handle.classList.toggle("day", isDay);
 
-    // Quick-Buttons aktivieren
     document.querySelectorAll(".quick-btn").forEach((b) => {
       const m = Number(b.dataset.min);
       b.classList.toggle("active", (isDay && m === DAY_PASS_MIN) || (!isDay && m === minutes));
     });
-
     $("dialKnob").setAttribute("aria-valuenow", String(minutes));
   }
 
@@ -209,18 +187,23 @@
 
     knob.addEventListener("pointerdown", (e) => {
       dialDragging = true;
-      dialLastAngle = dialAngleAt(e.clientX, e.clientY);
-      knob.setPointerCapture(e.pointerId);
+      try { knob.setPointerCapture(e.pointerId); } catch {}
+      const a = dialAngleAt(e.clientX, e.clientY);
+      dialLastAngle = a;
+      // Tap snappt sofort zur Fingerposition (direktes Folgen).
+      setMinutes(a < 0.5 ? 1 : a);
     });
     knob.addEventListener("pointermove", (e) => {
       if (!dialDragging) return;
       const a = dialAngleAt(e.clientX, e.clientY);
+      // Delta normalisiert auf ±180°, damit der Übergang über 0/360
+      // weich bleibt; der Punkt sitzt nach dem Update wieder genau am
+      // Finger.
       let d = a - dialLastAngle;
       while (d > 180) d -= 360;
       while (d < -180) d += 360;
-      dialAccum = Math.max(DEG_PER_MIN, dialAccum + d);
+      setMinutes(state.payMinutes + d);
       dialLastAngle = a;
-      applyDial();
     });
     const stop = (e) => {
       if (!dialDragging) return;
@@ -231,14 +214,16 @@
     knob.addEventListener("pointercancel", stop);
     knob.addEventListener("lostpointercapture", () => { dialDragging = false; });
 
-    // Schnellauswahl
     document.querySelectorAll(".quick-btn").forEach((b) => {
-      b.addEventListener("click", () => applyDial(Number(b.dataset.min)));
+      b.addEventListener("click", () => {
+        const m = Number(b.dataset.min);
+        if (m >= DAY_PASS_MIN) setDayPass();
+        else setMinutes(m);
+      });
     });
 
-    // Initial
     window.addEventListener("resize", renderDial);
-    applyDial(30);
+    setMinutes(30);
   }
 
   // ════════════════════════════════════════════════════
@@ -249,6 +234,7 @@
     const ms = minutes * 60 * 1000;
     state.paidTotal = ms;
     state.paidUntil = Date.now() + ms;
+    state.warned5min = false; // jede neue Zahlung resettet die Warnung
     showSuccessToast();
     bootApp();
     showScreen("app");
@@ -293,6 +279,27 @@
     } else {
       cdEl.textContent = `${m}:${String(s).padStart(2,"0")}`;
     }
+    // 5-Minuten-Warnung — nur einmal je Session, sobald wir die Schwelle
+    // unterschreiten. Im App-Screen blenden wir das Sheet ein.
+    if (!state.warned5min && totalSec <= 5 * 60 && state.screen === "app") {
+      state.warned5min = true;
+      showWarnSheet(Math.max(1, Math.ceil(totalSec / 60)));
+    }
+  }
+
+  function showWarnSheet(minutesLeft) {
+    $("warnMinutes").textContent = String(minutesLeft);
+    $("warnModal").hidden = false;
+  }
+  function closeWarnSheet() { $("warnModal").hidden = true; }
+
+  // Berechnet die noch verbleibenden Minuten (auf ganze Minuten gerundet)
+  // — wird genutzt, um beim Sprung in die Zeitauswahl das Rad sofort
+  // auf den richtigen Punkt zu setzen.
+  function remainingMinutesRoundedUp() {
+    const rem = Math.max(0, state.paidUntil - Date.now());
+    if (rem <= 0) return 1;
+    return Math.max(1, Math.ceil(rem / 60000));
   }
 
   // ════════════════════════════════════════════════════
@@ -391,51 +398,334 @@
   }
   function styleLabel(s) { return STYLE_LABELS[s] || s; }
 
-  // ─── Illustration (SVG-Fallback) ───
+  // ─── Illustration (SVG-Fallback, detailliert) ───
   function illustration(b) {
     const [light, mid, dark] = b.palette;
     const tag = b.illustration;
-    const sky = `
+    const id = b.id;
+    // Atmosphärische Grunddefs: Himmel, Boden, Lichtschein, Schatten.
+    const defs = `
       <defs>
-        <linearGradient id="sky-${b.id}" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="sky-${id}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f3ead8"/>
+          <stop offset="55%" stop-color="#e7dfc8"/>
+          <stop offset="100%" stop-color="#d6cbb0"/>
+        </linearGradient>
+        <linearGradient id="grnd-${id}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#c8b893"/>
+          <stop offset="100%" stop-color="#8c7a55"/>
+        </linearGradient>
+        <linearGradient id="walL-${id}" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stop-color="${light}"/>
-          <stop offset="100%" stop-color="#e8e0cf"/>
+          <stop offset="100%" stop-color="${mid}"/>
         </linearGradient>
-        <linearGradient id="grnd-${b.id}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#cdbf9c"/>
-          <stop offset="100%" stop-color="#a39473"/>
+        <linearGradient id="walD-${id}" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="${mid}"/>
+          <stop offset="100%" stop-color="${dark}"/>
         </linearGradient>
-      </defs>
-      <rect width="400" height="300" fill="url(#sky-${b.id})"/>
-      <rect y="240" width="400" height="60" fill="url(#grnd-${b.id})"/>
-      <circle cx="320" cy="60" r="22" fill="#f4e8c8" opacity="0.7"/>`;
+        <radialGradient id="sun-${id}" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stop-color="#fff5d6" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#fff5d6" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="shadow-${id}" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+          <feOffset dx="0" dy="2"/>
+          <feComponentTransfer><feFuncA type="linear" slope="0.4"/></feComponentTransfer>
+          <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>`;
+    const sky = `
+      <rect width="400" height="300" fill="url(#sky-${id})"/>
+      <circle cx="315" cy="62" r="80" fill="url(#sun-${id})"/>
+      <circle cx="315" cy="62" r="18" fill="#fff5d6" opacity="0.75"/>
+      <ellipse cx="80" cy="76" rx="48" ry="9" fill="#fff" opacity="0.5"/>
+      <ellipse cx="220" cy="48" rx="38" ry="7" fill="#fff" opacity="0.45"/>
+      <rect y="232" width="400" height="68" fill="url(#grnd-${id})"/>
+      <line x1="0" y1="234" x2="400" y2="234" stroke="${dark}" stroke-width="0.6" opacity="0.4"/>`;
+
+    // Häufige Bausteine
+    const wnd = (x, y, w, h) =>
+      `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${dark}" opacity="0.55"/>` +
+      `<rect x="${x}" y="${y}" width="${w}" height="${h*0.45}" fill="#fff" opacity="0.18"/>` +
+      `<line x1="${x+w/2}" y1="${y}" x2="${x+w/2}" y2="${y+h}" stroke="${dark}" stroke-width="0.6" opacity="0.6"/>` +
+      `<line x1="${x}" y1="${y+h/2}" x2="${x+w}" y2="${y+h/2}" stroke="${dark}" stroke-width="0.6" opacity="0.6"/>`;
+    const shade = (x, y, w, h, op=0.18) =>
+      `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${dark}" opacity="${op}"/>`;
+
     const C = {
-      watertower: `<polygon points="160,240 240,240 230,210 170,210" fill="${mid}"/><rect x="172" y="120" width="56" height="90" fill="${light}"/>${[180,190,200,210,220].map((x)=>`<line x1="${x}" y1="120" x2="${x}" y2="210" stroke="${mid}" stroke-width="1"/>`).join("")}<polygon points="160,120 240,120 230,100 170,100" fill="${dark}"/><rect x="190" y="60" width="20" height="40" fill="${mid}"/><polygon points="186,60 214,60 200,40" fill="#7ea693"/><rect x="198" y="30" width="4" height="14" fill="${dark}"/>`,
-      antonius: `<rect x="70" y="170" width="260" height="70" fill="${mid}"/><rect x="70" y="100" width="260" height="70" fill="${light}"/><polygon points="60,100 340,100 200,40" fill="${dark}"/><circle cx="200" cy="135" r="22" fill="${dark}" opacity="0.85"/><circle cx="200" cy="135" r="14" fill="${light}" opacity="0.7"/><line x1="200" y1="121" x2="200" y2="149" stroke="${dark}" stroke-width="1.5"/><line x1="186" y1="135" x2="214" y2="135" stroke="${dark}" stroke-width="1.5"/><rect x="280" y="40" width="30" height="200" fill="${dark}"/><rect x="285" y="60" width="20" height="40" fill="${light}" opacity="0.6"/><rect x="285" y="110" width="20" height="40" fill="${light}" opacity="0.5"/><polygon points="278,40 312,40 295,22" fill="${dark}"/><rect x="110" y="195" width="20" height="45" fill="${dark}"/><rect x="270" y="195" width="20" height="45" fill="${dark}"/>`,
-      lukas: `<rect x="60" y="160" width="260" height="80" fill="${light}"/><rect x="60" y="155" width="260" height="6" fill="${dark}"/>${[80,125,170,215,260].map((x)=>`<rect x="${x}" y="180" width="30" height="50" fill="${dark}" opacity="0.55"/>`).join("")}<rect x="320" y="80" width="34" height="160" fill="${mid}"/><rect x="328" y="100" width="18" height="120" fill="${light}" opacity="0.3"/><rect x="320" y="72" width="34" height="8" fill="${dark}"/><line x1="337" y1="60" x2="337" y2="72" stroke="${dark}" stroke-width="2"/><line x1="331" y1="66" x2="343" y2="66" stroke="${dark}" stroke-width="2"/>`,
-      volta: `<rect x="50" y="120" width="300" height="120" fill="${light}"/><rect x="50" y="120" width="300" height="14" fill="${dark}"/>${Array.from({length:8}).map((_,i)=>`<rect x="${66+i*36}" y="148" width="20" height="22" fill="${dark}" opacity="0.5"/><rect x="${66+i*36}" y="184" width="20" height="22" fill="${dark}" opacity="0.5"/>`).join("")}<rect x="170" y="200" width="60" height="40" fill="${mid}"/><rect x="186" y="220" width="28" height="20" fill="${dark}"/>`,
-      davidsboden: `<rect x="40" y="100" width="320" height="140" fill="${light}"/><rect x="40" y="100" width="320" height="6" fill="${mid}"/>${Array.from({length:5}).map((_,row)=>Array.from({length:9}).map((_,col)=>`<rect x="${56+col*34}" y="${118+row*24}" width="14" height="16" fill="${dark}" opacity="0.55"/>`).join("")).join("")}<rect x="180" y="208" width="40" height="32" fill="${dark}" opacity="0.85"/>`,
-      schudel: `<rect x="120" y="160" width="200" height="80" fill="${light}"/><rect x="120" y="155" width="200" height="6" fill="${dark}"/><rect x="140" y="175" width="160" height="14" fill="${dark}" opacity="0.55"/><rect x="140" y="200" width="40" height="40" fill="${mid}"/><rect x="190" y="200" width="20" height="40" fill="${dark}" opacity="0.7"/><rect x="220" y="200" width="80" height="20" fill="${dark}" opacity="0.55"/><rect x="80" y="200" width="40" height="40" fill="${mid}" opacity="0.6"/>`,
-      pavillon: `<polygon points="40,170 200,140 360,170 360,180 200,150 40,180" fill="${dark}"/><line x1="80" y1="170" x2="80" y2="240" stroke="${mid}" stroke-width="6"/><line x1="320" y1="170" x2="320" y2="240" stroke="${mid}" stroke-width="6"/><line x1="200" y1="150" x2="200" y2="240" stroke="${mid}" stroke-width="4"/><rect x="100" y="200" width="200" height="40" fill="${light}" opacity="0.6"/>${[140,180,220,260].map((x)=>`<line x1="${x}" y1="180" x2="${x}" y2="240" stroke="${mid}" stroke-width="2"/>`).join("")}`,
-      hechtliacker: `<polygon points="40,240 40,180 100,180 100,160 180,160 180,140 260,140 260,160 340,160 340,180 360,180 360,240" fill="${light}"/><polygon points="40,180 100,180 100,160 180,160 180,140 260,140 260,160 340,160 340,180" fill="none" stroke="${dark}" stroke-width="2"/>${[[60,200],[88,200],[116,180],[144,180],[172,180],[200,160],[228,160],[256,160],[284,180],[312,180],[340,200]].map(([x,y])=>`<rect x="${x}" y="${y}" width="14" height="20" fill="${dark}" opacity="0.55"/>`).join("")}`,
-      schwarzpark: `<ellipse cx="80" cy="240" rx="50" ry="14" fill="${dark}" opacity="0.25"/><ellipse cx="340" cy="240" rx="60" ry="16" fill="${dark}" opacity="0.25"/><rect x="150" y="80" width="100" height="160" fill="${mid}"/>${Array.from({length:5}).map((_,row)=>Array.from({length:3}).map((_,col)=>`<rect x="${162+col*28}" y="${100+row*28}" width="18" height="18" fill="${light}" opacity="0.6"/>`).join("")).join("")}<line x1="200" y1="80" x2="200" y2="240" stroke="${dark}" stroke-width="1.5" opacity="0.5"/>`,
-      buvette: `<rect y="220" width="400" height="20" fill="#7a8e8a"/><rect x="150" y="170" width="100" height="60" fill="${mid}"/><rect x="150" y="166" width="100" height="6" fill="${dark}"/><polygon points="150,170 250,170 280,150 180,150" fill="${mid}" opacity="0.7"/><rect x="170" y="190" width="60" height="30" fill="${dark}" opacity="0.6"/><rect x="178" y="196" width="44" height="18" fill="${light}" opacity="0.5"/><line x1="120" y1="150" x2="280" y2="150" stroke="${dark}" stroke-width="1.5" opacity="0.4"/>`,
-      brunngaesslein: `<rect x="80" y="120" width="60" height="120" fill="${light}" opacity="0.85"/><rect x="260" y="100" width="60" height="140" fill="${light}" opacity="0.85"/><rect x="150" y="80" width="100" height="160" fill="${light}"/><polygon points="148,80 252,80 200,40" fill="${dark}"/>${Array.from({length:4}).map((_,row)=>Array.from({length:2}).map((_,col)=>`<rect x="${166+col*30}" y="${100+row*30}" width="18" height="22" fill="${dark}" opacity="0.55"/>`).join("")).join("")}<rect x="165" y="180" width="70" height="14" fill="${mid}"/>`
+      watertower: () => {
+        // Schmaler hexagonaler Wasserturm: Sockel, kannelierter Schaft,
+        // Wassertank, Kupferlaterne mit Spitze.
+        const cx = 200;
+        return `
+          <ellipse cx="${cx}" cy="238" rx="80" ry="6" fill="${dark}" opacity="0.25"/>
+          <!-- Sockel -->
+          <polygon points="${cx-44},232 ${cx+44},232 ${cx+38},212 ${cx-38},212" fill="url(#walD-${id})"/>
+          <rect x="${cx-30}" y="212" width="60" height="2" fill="${dark}" opacity="0.6"/>
+          <!-- Schaft mit Kanneluren -->
+          <rect x="${cx-26}" y="124" width="52" height="88" fill="url(#walL-${id})"/>
+          ${[-20,-12,-4,4,12,20].map(o=>`<line x1="${cx+o}" y1="124" x2="${cx+o}" y2="212" stroke="${dark}" stroke-width="0.8" opacity="0.45"/>`).join("")}
+          <rect x="${cx-26}" y="124" width="52" height="6" fill="${dark}" opacity="0.5"/>
+          <!-- Wassertank -->
+          <rect x="${cx-40}" y="96" width="80" height="28" fill="${mid}"/>
+          <rect x="${cx-40}" y="96" width="80" height="6" fill="${dark}" opacity="0.6"/>
+          <polygon points="${cx-40},96 ${cx+40},96 ${cx+34},86 ${cx-34},86" fill="${dark}"/>
+          <!-- Laterne -->
+          <rect x="${cx-12}" y="60" width="24" height="26" fill="${mid}"/>
+          ${[-6,0,6].map(o=>`<line x1="${cx+o}" y1="60" x2="${cx+o}" y2="86" stroke="${dark}" stroke-width="0.8" opacity="0.45"/>`).join("")}
+          <polygon points="${cx-14},60 ${cx+14},60 ${cx},40" fill="#7aa68d"/>
+          <polygon points="${cx-14},60 ${cx+14},60 ${cx},40" fill="#fff" opacity="0.12"/>
+          <!-- Blitzableiter-Spitze -->
+          <rect x="${cx-1.5}" y="22" width="3" height="20" fill="${dark}"/>
+          <polygon points="${cx-3},22 ${cx+3},22 ${cx},14" fill="${dark}"/>
+          <!-- Baumwerk -->
+          <ellipse cx="60" cy="232" rx="36" ry="22" fill="#7ea683" opacity="0.55"/>
+          <ellipse cx="44" cy="220" rx="20" ry="14" fill="#7ea683" opacity="0.45"/>
+          <ellipse cx="346" cy="234" rx="30" ry="16" fill="#7ea683" opacity="0.45"/>`;
+      },
+      antonius: () => {
+        // Basilika mit Rosenfenster und seitlichem Glockenturm.
+        return `
+          <ellipse cx="200" cy="240" rx="170" ry="6" fill="${dark}" opacity="0.2"/>
+          <!-- Hauptkörper -->
+          <rect x="62" y="120" width="218" height="120" fill="url(#walL-${id})"/>
+          <rect x="62" y="120" width="218" height="6" fill="${dark}"/>
+          <polygon points="62,120 280,120 171,52" fill="${dark}"/>
+          <polygon points="62,120 280,120 171,52" fill="#fff" opacity="0.05"/>
+          <!-- Rosenfenster -->
+          <circle cx="171" cy="158" r="26" fill="${dark}" opacity="0.85"/>
+          <circle cx="171" cy="158" r="18" fill="${light}" opacity="0.55"/>
+          ${[0,45,90,135].map(a=>`<line x1="${171+Math.cos(a*Math.PI/180)*22}" y1="${158+Math.sin(a*Math.PI/180)*22}" x2="${171-Math.cos(a*Math.PI/180)*22}" y2="${158-Math.sin(a*Math.PI/180)*22}" stroke="${dark}" stroke-width="1.4"/>`).join("")}
+          <circle cx="171" cy="158" r="6" fill="${dark}"/>
+          <!-- Eingangsportal -->
+          <rect x="155" y="200" width="32" height="40" fill="${dark}"/>
+          <rect x="159" y="204" width="24" height="32" fill="${mid}"/>
+          <line x1="171" y1="204" x2="171" y2="236" stroke="${dark}" stroke-width="0.8"/>
+          <!-- Seitliche Fenster -->
+          ${[85,115,221,251].map(x=>`<rect x="${x}" y="180" width="14" height="50" fill="${dark}" opacity="0.5"/><line x1="${x+7}" y1="180" x2="${x+7}" y2="230" stroke="${dark}" stroke-width="0.6"/>`).join("")}
+          <!-- Glockenturm -->
+          <rect x="294" y="62" width="40" height="178" fill="url(#walD-${id})"/>
+          <rect x="294" y="62" width="40" height="6" fill="${dark}"/>
+          <polygon points="290,62 338,62 314,40" fill="${dark}"/>
+          <rect x="302" y="92" width="24" height="36" fill="${dark}" opacity="0.7"/>
+          <rect x="302" y="142" width="24" height="36" fill="${light}" opacity="0.5"/>
+          <rect x="302" y="192" width="24" height="36" fill="${dark}" opacity="0.6"/>
+          <rect x="312" y="26" width="4" height="16" fill="${dark}"/>
+          <rect x="305" y="36" width="18" height="3" fill="${dark}"/>`;
+      },
+      lukas: () => {
+        // Modernistische Querbau-Kirche mit freistehendem Glockenturm.
+        return `
+          <ellipse cx="200" cy="236" rx="180" ry="6" fill="${dark}" opacity="0.2"/>
+          <rect x="40" y="148" width="280" height="92" fill="url(#walL-${id})"/>
+          <rect x="40" y="142" width="280" height="8" fill="${dark}"/>
+          ${[60,108,156,204,252,300].map(x=>wnd(x,170,28,52)).join("")}
+          <rect x="40" y="222" width="280" height="18" fill="${dark}" opacity="0.18"/>
+          <!-- Freistehender Glockenturm -->
+          <rect x="332" y="72" width="36" height="168" fill="url(#walD-${id})"/>
+          <rect x="332" y="72" width="36" height="6" fill="${dark}"/>
+          <rect x="340" y="92" width="20" height="92" fill="${light}" opacity="0.32"/>
+          ${[6,3,3,3,3,3].reduce((acc,_,i)=>acc+`<line x1="340" y1="${100+i*16}" x2="360" y2="${100+i*16}" stroke="${dark}" stroke-width="0.6" opacity="0.5"/>`,"")}
+          <rect x="338" y="60" width="24" height="14" fill="${dark}" opacity="0.6"/>
+          <line x1="350" y1="36" x2="350" y2="60" stroke="${dark}" stroke-width="2"/>
+          <line x1="342" y1="46" x2="358" y2="46" stroke="${dark}" stroke-width="2"/>
+          <!-- Lücke betonen -->
+          <line x1="324" y1="72" x2="324" y2="240" stroke="#fff" stroke-width="2"/>`;
+      },
+      volta: () => {
+        // Zwei Volumen mit ockerfarbenem Verputz und tief sitzenden Fenstern.
+        return `
+          <ellipse cx="200" cy="240" rx="180" ry="6" fill="${dark}" opacity="0.2"/>
+          <rect x="30" y="120" width="340" height="120" fill="url(#walL-${id})"/>
+          <rect x="30" y="120" width="340" height="14" fill="${dark}"/>
+          ${Array.from({length:8}).map((_,i)=>{
+            const x = 52 + i*40;
+            const deep = i % 2 === 0 ? 6 : 0;
+            return shade(x-2, 146-deep, 24, 26, 0.55) +
+              `<rect x="${x}" y="${146-deep}" width="20" height="22" fill="${dark}" opacity="0.8"/>` +
+              `<rect x="${x}" y="${146-deep}" width="20" height="6" fill="#fff" opacity="0.18"/>` +
+              shade(x-2, 184-deep, 24, 26, 0.55) +
+              `<rect x="${x}" y="${184-deep}" width="20" height="22" fill="${dark}" opacity="0.8"/>` +
+              `<rect x="${x}" y="${184-deep}" width="20" height="6" fill="#fff" opacity="0.18"/>`;
+          }).join("")}
+          <rect x="170" y="200" width="60" height="40" fill="${mid}"/>
+          <rect x="186" y="220" width="28" height="20" fill="${dark}"/>
+          <line x1="200" y1="220" x2="200" y2="240" stroke="#fff" stroke-width="0.6" opacity="0.5"/>`;
+      },
+      davidsboden: () => {
+        // Streng gerastertes Blockrand-Wohnhaus mit Punktfenstern.
+        return `
+          <ellipse cx="200" cy="240" rx="180" ry="6" fill="${dark}" opacity="0.2"/>
+          <rect x="20" y="84" width="360" height="156" fill="url(#walL-${id})"/>
+          <rect x="20" y="84" width="360" height="8" fill="${dark}"/>
+          <rect x="20" y="232" width="360" height="10" fill="${dark}" opacity="0.3"/>
+          ${Array.from({length:6}).map((_,row)=>
+            Array.from({length:10}).map((_,col)=>wnd(36 + col*34, 102 + row*22, 16, 14)).join("")
+          ).join("")}
+          <rect x="180" y="200" width="40" height="42" fill="${dark}" opacity="0.85"/>
+          <rect x="186" y="206" width="28" height="30" fill="${mid}" opacity="0.6"/>`;
+      },
+      schudel: () => {
+        // Funktionalistische Villa mit Bandfenster und auskragendem Sturz.
+        return `
+          <ellipse cx="200" cy="240" rx="170" ry="6" fill="${dark}" opacity="0.2"/>
+          <!-- Garten -->
+          <rect x="0" y="232" width="400" height="10" fill="#9c8c64"/>
+          <!-- Hauptkubus -->
+          <rect x="120" y="140" width="200" height="100" fill="url(#walL-${id})"/>
+          <rect x="120" y="134" width="200" height="8" fill="${dark}"/>
+          <!-- Bandfenster -->
+          <rect x="134" y="156" width="172" height="20" fill="${dark}" opacity="0.85"/>
+          <rect x="134" y="156" width="172" height="6" fill="#fff" opacity="0.2"/>
+          ${Array.from({length:9}).map((_,i)=>`<line x1="${134+i*19}" y1="156" x2="${134+i*19}" y2="176" stroke="${dark}" stroke-width="0.8" opacity="0.55"/>`).join("")}
+          <!-- Eingang -->
+          <rect x="140" y="190" width="34" height="50" fill="${dark}"/>
+          <rect x="146" y="196" width="22" height="40" fill="${mid}"/>
+          <!-- Auskragender Sturz -->
+          <rect x="115" y="186" width="100" height="6" fill="${dark}" opacity="0.7"/>
+          <!-- Anbau links -->
+          <rect x="70" y="180" width="50" height="60" fill="url(#walD-${id})"/>
+          <rect x="70" y="200" width="50" height="14" fill="${dark}" opacity="0.6"/>
+          <!-- Schornstein -->
+          <rect x="280" y="118" width="14" height="22" fill="${dark}"/>`;
+      },
+      pavillon: () => {
+        // V-förmiges Faltdach auf schlanken Stützen, ganz aus Glas.
+        return `
+          <ellipse cx="200" cy="234" rx="170" ry="5" fill="${dark}" opacity="0.18"/>
+          <!-- Faltdach -->
+          <polygon points="36,162 200,128 364,162 364,176 200,142 36,176" fill="url(#walD-${id})"/>
+          <polygon points="36,162 200,128 364,162" fill="#fff" opacity="0.08"/>
+          <!-- Stützen -->
+          <rect x="76" y="162" width="6" height="76" fill="${mid}"/>
+          <rect x="196" y="142" width="6" height="96" fill="${mid}"/>
+          <rect x="316" y="162" width="6" height="76" fill="${mid}"/>
+          <!-- Glasfront -->
+          <rect x="92" y="172" width="216" height="64" fill="${light}" opacity="0.45"/>
+          ${[120,158,196,234,272].map(x=>`<line x1="${x}" y1="172" x2="${x}" y2="236" stroke="${dark}" stroke-width="0.9" opacity="0.55"/>`).join("")}
+          <line x1="92" y1="205" x2="308" y2="205" stroke="${dark}" stroke-width="0.6" opacity="0.45"/>
+          <!-- Terrazzo Boden Andeutung -->
+          <rect x="80" y="232" width="240" height="6" fill="${dark}" opacity="0.45"/>`;
+      },
+      hechtliacker: () => {
+        // Gestaffelte Loggia-Siedlung am Hang.
+        return `
+          <polygon points="0,240 0,232 40,228 40,220 80,216 120,210 160,200 200,194 240,186 280,180 320,176 360,172 400,168 400,240" fill="#8b9c73" opacity="0.6"/>
+          <polygon points="40,240 40,180 100,180 100,160 180,160 180,138 260,138 260,162 340,162 340,184 360,184 360,240" fill="url(#walL-${id})"/>
+          <polygon points="40,180 100,180 100,160 180,160 180,138 260,138 260,162 340,162 340,184" fill="none" stroke="${dark}" stroke-width="1.5"/>
+          ${[
+            [56,196,12,28],[80,196,12,28],[112,176,12,28],[140,176,12,28],
+            [168,158,12,26],[196,158,12,26],[224,158,12,26],[252,158,12,26],
+            [280,180,12,28],[308,180,12,28],[336,200,12,28]
+          ].map(([x,y,w,h])=>shade(x-2,y-2,w+4,h+4,0.18)+`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${dark}" opacity="0.7"/><rect x="${x}" y="${y}" width="${w}" height="${h*0.35}" fill="#fff" opacity="0.15"/>`).join("")}
+          <!-- Loggia-Brüstungen -->
+          ${[[60,220,16],[84,220,16],[116,200,16],[144,200,16],[172,182,16],[200,182,16],[228,182,16],[256,182,16],[284,204,16],[312,204,16],[340,224,16]].map(([x,y,w])=>`<rect x="${x-2}" y="${y}" width="${w+4}" height="3" fill="${dark}" opacity="0.65"/>`).join("")}`;
+      },
+      schwarzpark: () => {
+        // Einzelner Wohnblock allein im Park, mit Schatten von Bäumen.
+        return `
+          <ellipse cx="60" cy="232" rx="48" ry="14" fill="${dark}" opacity="0.28"/>
+          <ellipse cx="350" cy="234" rx="55" ry="16" fill="${dark}" opacity="0.28"/>
+          <ellipse cx="60" cy="206" rx="40" ry="34" fill="#6f8a5e" opacity="0.7"/>
+          <ellipse cx="46" cy="190" rx="22" ry="20" fill="#6f8a5e" opacity="0.55"/>
+          <ellipse cx="350" cy="208" rx="46" ry="36" fill="#6f8a5e" opacity="0.7"/>
+          <ellipse cx="370" cy="190" rx="22" ry="20" fill="#6f8a5e" opacity="0.55"/>
+          <!-- Block -->
+          <rect x="140" y="80" width="120" height="160" fill="url(#walD-${id})"/>
+          <rect x="140" y="80" width="120" height="6" fill="${dark}" opacity="0.6"/>
+          <line x1="200" y1="80" x2="200" y2="240" stroke="${dark}" stroke-width="0.7" opacity="0.55"/>
+          ${Array.from({length:5}).map((_,row)=>
+            Array.from({length:3}).map((_,col)=>{
+              const x = 152 + col*36, y = 96 + row*28;
+              return shade(x-2,y-2,22,22,0.2)+`<rect x="${x}" y="${y}" width="18" height="18" fill="${light}" opacity="0.55"/><rect x="${x}" y="${y}" width="18" height="6" fill="#fff" opacity="0.15"/>`;
+            }).join("")
+          ).join("")}
+          <!-- Sichtbeton-Bretterstruktur -->
+          ${Array.from({length:14}).map((_,i)=>`<line x1="140" y1="${88+i*11}" x2="260" y2="${88+i*11}" stroke="${dark}" stroke-width="0.4" opacity="0.25"/>`).join("")}`;
+      },
+      buvette: () => {
+        // Beton-Kiosk am Rhein mit hochgeklapptem Schiebeladen.
+        return `
+          <!-- Rhein -->
+          <rect y="206" width="400" height="34" fill="#6c8a8a"/>
+          ${[210,216,222,228,234].map(y=>`<line x1="0" y1="${y}" x2="400" y2="${y}" stroke="#fff" stroke-width="0.6" opacity="0.18"/>`).join("")}
+          <!-- Quai -->
+          <rect y="200" width="400" height="8" fill="#9e8c70"/>
+          <!-- Buvette -->
+          <rect x="150" y="150" width="100" height="56" fill="url(#walD-${id})"/>
+          <rect x="150" y="146" width="100" height="6" fill="${dark}"/>
+          <!-- Hochgezogener Klappladen -->
+          <polygon points="150,150 250,150 282,128 182,128" fill="${mid}"/>
+          <polygon points="150,150 250,150 282,128 182,128" fill="#fff" opacity="0.1"/>
+          <line x1="150" y1="150" x2="182" y2="128" stroke="${dark}" stroke-width="1"/>
+          <line x1="250" y1="150" x2="282" y2="128" stroke="${dark}" stroke-width="1"/>
+          <!-- Schmiede-Beschläge -->
+          <circle cx="170" cy="150" r="3" fill="${dark}"/>
+          <circle cx="230" cy="150" r="3" fill="${dark}"/>
+          <!-- Theke -->
+          <rect x="166" y="172" width="68" height="32" fill="${dark}" opacity="0.7"/>
+          <rect x="174" y="178" width="52" height="22" fill="${light}" opacity="0.55"/>
+          <line x1="200" y1="178" x2="200" y2="200" stroke="${dark}" stroke-width="0.6"/>
+          <!-- Eckpfosten -->
+          <rect x="148" y="146" width="4" height="60" fill="${dark}"/>
+          <rect x="248" y="146" width="4" height="60" fill="${dark}"/>`;
+      },
+      brunngaesslein: () => {
+        // Stadt-Reihenhaus zwischen zwei Nachbarn, mit asymmetrischem Balkon.
+        return `
+          <ellipse cx="200" cy="238" rx="170" ry="6" fill="${dark}" opacity="0.18"/>
+          <!-- Linker Nachbar -->
+          <rect x="40" y="120" width="80" height="120" fill="${light}" opacity="0.7"/>
+          <rect x="40" y="116" width="80" height="6" fill="${dark}" opacity="0.5"/>
+          ${Array.from({length:3}).map((_,i)=>wnd(56,138+i*30,18,16)+wnd(86,138+i*30,18,16)).join("")}
+          <!-- Rechter Nachbar -->
+          <rect x="280" y="100" width="80" height="140" fill="${light}" opacity="0.7"/>
+          <rect x="280" y="96" width="80" height="6" fill="${dark}" opacity="0.5"/>
+          ${Array.from({length:4}).map((_,i)=>wnd(296,116+i*28,18,16)+wnd(326,116+i*28,18,16)).join("")}
+          <!-- Hauptbau -->
+          <rect x="120" y="80" width="160" height="160" fill="url(#walL-${id})"/>
+          <polygon points="116,80 284,80 200,40" fill="${dark}"/>
+          <polygon points="116,80 284,80 200,40" fill="#fff" opacity="0.05"/>
+          ${Array.from({length:4}).map((_,row)=>
+            Array.from({length:2}).map((_,col)=>wnd(146+col*52,100+row*30,22,22)).join("")
+          ).join("")}
+          <!-- Asymmetrischer Betonbalkon -->
+          <rect x="138" y="180" width="68" height="6" fill="${dark}"/>
+          <rect x="138" y="186" width="68" height="14" fill="${mid}"/>
+          <line x1="148" y1="186" x2="148" y2="200" stroke="${dark}" stroke-width="0.7"/>
+          <line x1="196" y1="186" x2="196" y2="200" stroke="${dark}" stroke-width="0.7"/>
+          <!-- Eingang -->
+          <rect x="186" y="208" width="28" height="32" fill="${dark}"/>
+          <rect x="190" y="214" width="20" height="26" fill="${mid}"/>`;
+      }
     };
-    return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">${sky}${C[tag] || ""}</svg>`;
+    const body = (C[tag] || (() => ""))();
+    return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">${defs}${sky}${body}</svg>`;
   }
 
-  // Foto-Bild mit SVG-Fallback. Wenn die Wikimedia-URL nicht auflöst,
-  // wird das Bild beim onerror durch die Illustration ersetzt.
+  // Foto mit URL-Kette: scheitert eine URL, wird die nächste probiert,
+  // ganz am Ende fällt die SVG-Illustration ein. Funktioniert ohne JS-
+  // Aufrufe pro Foto, da der img-Selbst-Swap im onerror-Attribut sitzt.
   function photoOrIllustration(b) {
-    if (!b.photo) return illustration(b);
+    const urls = Array.isArray(b.photo) ? b.photo : (b.photo ? [b.photo] : []);
+    if (!urls.length) return illustration(b);
     const safeAlt = b.name.replace(/"/g, "&quot;");
-    return `<img src="${b.photo}" alt="${safeAlt}" loading="lazy" decoding="async"` +
-      ` onerror="this.outerHTML = window.__buildingFallback(${b.id})">`;
+    return `<img src="${urls[0]}" alt="${safeAlt}" loading="lazy" decoding="async"` +
+      ` data-pid="${b.id}" data-pix="0"` +
+      ` onerror="window.__nextPhoto(this)">`;
   }
-  window.__buildingFallback = function (id) {
+  window.__nextPhoto = function (img) {
+    const id = Number(img.dataset.pid);
+    const idx = Number(img.dataset.pix) + 1;
     const b = BUILDINGS.find((x) => x.id === id);
-    return b ? illustration(b) : "";
+    if (!b) return;
+    const urls = Array.isArray(b.photo) ? b.photo : [b.photo];
+    if (idx < urls.length) {
+      img.dataset.pix = String(idx);
+      img.src = urls[idx];
+    } else {
+      img.outerHTML = illustration(b);
+    }
   };
 
   // ─── Karten ───
@@ -795,10 +1085,23 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
-    // Countdown → Zeit anpassen
+    // Countdown → Zeit anpassen. Das Rad startet exakt bei der noch
+    // verbleibenden Zeit, damit der Punkt korrekt am aktuellen Stand sitzt.
     $("adjustTimeBtn").addEventListener("click", () => {
+      const rem = remainingMinutesRoundedUp();
       showScreen("payment");
-      syncDialFromMinutes(state.payMinutes);
+      syncDialFromMinutes(rem);
+    });
+
+    // 5-Minuten-Warnung
+    $("warnModal").addEventListener("click", (e) => {
+      if (e.target.closest("[data-warn-close]")) closeWarnSheet();
+    });
+    $("warnExtend").addEventListener("click", () => {
+      const rem = remainingMinutesRoundedUp();
+      closeWarnSheet();
+      showScreen("payment");
+      syncDialFromMinutes(rem);
     });
 
     // Zahlungs-Buttons
