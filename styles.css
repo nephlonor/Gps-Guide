@@ -974,6 +974,19 @@ button { font-family: inherit; }
 .cta-btn:hover { background: #0c1815; }
 .cta-btn.muted { background: var(--pill); color: var(--ink); }
 
+.warn-sheet { max-width: 420px; }
+.warn-emblem {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #fde2dc;
+  color: #b94b35;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  margin: 6px auto 12px;
+}
+
 /* ─── Toast ─── */
 .toast {
   position: fixed;

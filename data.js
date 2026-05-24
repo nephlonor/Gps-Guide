@@ -11,6 +11,9 @@ function wmFilePath(filename) {
   return "https://commons.wikimedia.org/wiki/Special:FilePath/" +
     encodeURIComponent(filename) + "?width=900";
 }
+// Mehrere wahrscheinliche Dateinamen pro Gebäude — beim Laden wird die
+// erste auflösbare URL angezeigt, ansonsten fällt die SVG-Illustration ein.
+function photos(...names) { return names.map(wmFilePath); }
 
 window.BUILDINGS = [
   {
@@ -24,7 +27,12 @@ window.BUILDINGS = [
     lon: 7.784512,
     illustration: "watertower",
     palette: ["#d9c9a8", "#8a6f44", "#3a2e22"],
-    photo: wmFilePath("Wasserturm Bruderholz Basel.jpg"),
+    photo: photos(
+      "Bruderholz Wasserturm.jpg",
+      "Wasserturm Bruderholz Basel.jpg",
+      "Basel Bruderholz Wasserturm.JPG",
+      "Wasserturm Bruderholz.jpg"
+    ),
     text:
       "Ein zarter sechseckiger Wasserturm, versteckt auf dem begrünten " +
       "Bruderholz-Plateau. Hans Bernoulli — eher bekannt als Theoretiker " +
@@ -51,7 +59,13 @@ window.BUILDINGS = [
     lon: 7.784615,
     illustration: "antonius",
     palette: ["#9c9388", "#5a5247", "#2f2a23"],
-    photo: wmFilePath("Antoniuskirche Basel.jpg"),
+    photo: photos(
+      "Basel Antoniuskirche.jpg",
+      "Antoniuskirche Basel.jpg",
+      "Basel - Antoniuskirche.jpg",
+      "Antoniuskirche (Basel).jpg",
+      "St. Anton Basel.jpg"
+    ),
     text:
       "Die erste vollständig in Stahlbeton errichtete Kirche der Schweiz " +
       "und eines der entscheidenden Bauwerke der europäischen modernen " +
@@ -77,7 +91,12 @@ window.BUILDINGS = [
     lon: 7.784910,
     illustration: "lukas",
     palette: ["#ddd2bb", "#7c6b51", "#352c23"],
-    photo: wmFilePath("Lukaskirche Basel.jpg"),
+    photo: photos(
+      "Basel Lukaskirche.jpg",
+      "Lukaskirche Basel.jpg",
+      "Basel - Lukaskirche.jpg",
+      "Lukaskirche (Basel).jpg"
+    ),
     text:
       "Egender bringt Bauhaus-Zurückhaltung in die protestantische " +
       "Pfarrkirche. Ein freistehender Campanile setzt sich vom " +
@@ -102,7 +121,12 @@ window.BUILDINGS = [
     lon: 7.785107,
     illustration: "volta",
     palette: ["#c9b88b", "#7d6a3f", "#3a2f1e"],
-    photo: wmFilePath("Volta-Schulhaus Basel.jpg"),
+    photo: photos(
+      "Basel Volta-Schulhaus.jpg",
+      "Volta-Schulhaus Basel.jpg",
+      "Schulhaus Volta Basel.jpg",
+      "Volta-Schulhaus.jpg"
+    ),
     text:
       "Hinter dem geschäftigen Wasgenring verbirgt sich ein kompaktes " +
       "Hofschulhaus mit tief ockerfarbenem Verputz — eine zeitgenössische " +
@@ -125,7 +149,12 @@ window.BUILDINGS = [
     lon: 7.785248,
     illustration: "davidsboden",
     palette: ["#e3d4b7", "#a98a5d", "#3d3225"],
-    photo: wmFilePath("Davidsboden Basel.jpg"),
+    photo: photos(
+      "Basel Siedlung Davidsboden.jpg",
+      "Davidsboden Basel.jpg",
+      "Siedlung Im Davidsboden Basel.jpg",
+      "Im Davidsboden Basel.jpg"
+    ),
     text:
       "Ein frühes Manifest der sogenannten 'Analogen' Architektur Basels: " +
       "anonym, ruhig, fast bewusst zurückhaltend. Roger Diener stapelt " +
@@ -148,7 +177,12 @@ window.BUILDINGS = [
     lon: 7.784821,
     illustration: "schudel",
     palette: ["#cfc1a3", "#8a7549", "#332a1d"],
-    photo: wmFilePath("Wohnhaus Schudel Basel.jpg"),
+    photo: photos(
+      "Wohnhaus Schudel Basel.jpg",
+      "Haus Schudel Basel.jpg",
+      "Hannes Meyer Wohnhaus Schudel.jpg",
+      "Basel Schwarzwaldallee Schudel.jpg"
+    ),
     text:
       "Vor Meyers Bauhaus-Direktorat erbaut, ist diese kleine " +
       "Familienvilla der Rohentwurf seines radikalen Funktionalismus. " +
@@ -171,7 +205,12 @@ window.BUILDINGS = [
     lon: 7.784594,
     illustration: "pavillon",
     palette: ["#b7a47a", "#6e5b34", "#2d2418"],
-    photo: wmFilePath("Pavillon Sevogel Basel.jpg"),
+    photo: photos(
+      "Basel Pavillon Sevogel.jpg",
+      "Pavillon Sevogel Basel.jpg",
+      "Sevogelplatz Pavillon.jpg",
+      "Tramwartehalle Sevogel Basel.jpg"
+    ),
     text:
       "Ein winziger Nachkriegspavillon, den niemand fotografiert. " +
       "Faltwerkdach aus Beton, vollständig verglaste Fronten, " +
@@ -194,7 +233,12 @@ window.BUILDINGS = [
     lon: 7.784477,
     illustration: "hechtliacker",
     palette: ["#d9c7a0", "#9c7e4a", "#3a2e1c"],
-    photo: wmFilePath("Hechtliacker Basel.jpg"),
+    photo: photos(
+      "Basel Hechtliacker.jpg",
+      "Hechtliacker Basel.jpg",
+      "Wohnsiedlung Hechtliacker.jpg",
+      "Hechtliacker Siedlung.jpg"
+    ),
     text:
       "Eine spätmoderne Wohnsiedlung, die sich biegend und stufend dem " +
       "Hang anpasst. Die Architekten verweigern eine einzige dominante " +
@@ -217,7 +261,12 @@ window.BUILDINGS = [
     lon: 7.784366,
     illustration: "schwarzpark",
     palette: ["#a89878", "#62543a", "#2c241a"],
-    photo: wmFilePath("Schwarzpark Wohnhaus Basel.jpg"),
+    photo: photos(
+      "Basel Schwarzpark Wohnhaus.jpg",
+      "Wohnhaus Schwarzpark Basel.jpg",
+      "Schwarzpark Wohnhaus.jpg",
+      "Miller Maranta Schwarzpark.jpg"
+    ),
     text:
       "Ein einzelner Wohnblock, allein in einem öffentlichen Park — eine " +
       "Schweizer Lesart von Le Corbusiers Pavillon Suisse, aus dunkel " +
@@ -239,7 +288,12 @@ window.BUILDINGS = [
     lon: 7.784446,
     illustration: "buvette",
     palette: ["#bca982", "#6a5635", "#2a2117"],
-    photo: wmFilePath("Rheinhafen-Buvette Basel.jpg"),
+    photo: photos(
+      "Basel Buvette Dreilaendereck.jpg",
+      "Buvette Dreiländereck Basel.jpg",
+      "Dreilaendereck Buvette.jpg",
+      "Rheinhafen Buvette Basel.jpg"
+    ),
     text:
       "An der äussersten Spitze der Schweiz, wo der Rhein auf Frankreich " +
       "und Deutschland trifft, tarnt sich ein winziger Betonkiosk als " +
@@ -261,7 +315,12 @@ window.BUILDINGS = [
     lon: 7.784219,
     illustration: "brunngaesslein",
     palette: ["#cbb98a", "#7d6839", "#332919"],
-    photo: wmFilePath("Brunngaesslein 12 Basel.jpg"),
+    photo: photos(
+      "Brunngässlein 12 Basel.jpg",
+      "Hermann Baur Brunngaesslein.jpg",
+      "Basel Brunngaesslein 12.jpg",
+      "Brunngaesslein Basel.jpg"
+    ),
     text:
       "Hermann Baurs kleines Stadthaus schiebt sich mit grosser " +
       "Behutsamkeit zwischen zwei ältere Nachbarn. Ein Raster aus " +
@@ -275,13 +334,15 @@ window.BUILDINGS = [
   }
 ];
 
-// Tour-Auswahl: nur die erste Tour ist freigeschaltet.
+// Tour-Auswahl: sieben Basler Touren mit unterschiedlichen Themen und
+// Quartieren. Nur die erste ist freigeschaltet, die übrigen sind noch
+// im Aufbau.
 window.TOURS = [
-  { id: "basel-11",   city: "Basel",      name: "11 Geheimtipps",                count: 11, available: true },
-  { id: "bern",       city: "Bern",       name: "Sandstein-Altstadt",            count: 14, available: false },
-  { id: "zurich",     city: "Zürich",     name: "Industrie & Hochbauten",        count: 10, available: false },
-  { id: "geneva",     city: "Genf",       name: "Moderne am See",                count: 9,  available: false },
-  { id: "lucerne",    city: "Luzern",     name: "Brücken & Promenaden",          count: 8,  available: false },
-  { id: "stgallen",   city: "St. Gallen", name: "Stiftsbezirk & Textilbauten",   count: 12, available: false },
-  { id: "lausanne",   city: "Lausanne",   name: "Sakralbauten der Romandie",     count: 7,  available: false }
+  { id: "basel-11",          city: "Basel", name: "11 Geheimtipps",                  count: 11, available: true,  blurb: "Versteckte Meisterwerke jenseits der Touristenpfade" },
+  { id: "basel-altstadt",    city: "Basel", name: "Grossbasel — Altstadt",           count: 12, available: false, blurb: "Münsterplatz, Spalentor und das mittelalterliche Häuserbuch" },
+  { id: "basel-kleinbasel",  city: "Basel", name: "Kleinbasel & Rheinpromenade",     count: 10, available: false, blurb: "Hafenarchitektur, Drei-Wettern-Skyline, Messe-Hochbauten" },
+  { id: "basel-klybeck",     city: "Basel", name: "Industriequartier Klybeck",       count: 9,  available: false, blurb: "Backsteinfabriken, Wohnwerken und ein neuer Stadtteil" },
+  { id: "basel-bauhaus",     city: "Basel", name: "Bauhaus-Spaziergang",             count: 8,  available: false, blurb: "Hannes Meyer, Hans Schmidt und die Schweizer Avantgarde" },
+  { id: "basel-sakral",      city: "Basel", name: "Sakralbauten",                    count: 9,  available: false, blurb: "Vom Münster bis Karl Mosers Betonkirche" },
+  { id: "basel-bruderholz",  city: "Basel", name: "Bruderholz — Gartenstadt",        count: 11, available: false, blurb: "Bernoullis Gartenstadt-Vision auf dem Plateau" }
 ];

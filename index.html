@@ -227,6 +227,24 @@
     </article>
   </div>
 
+  <!-- 5-Minuten-Warnung -->
+  <div class="modal" id="warnModal" hidden>
+    <div class="modal-backdrop" data-warn-close></div>
+    <article class="modal-sheet warn-sheet" role="dialog" aria-modal="true" aria-labelledby="warnTitle">
+      <div class="modal-scroll" style="padding: 26px 22px 8px;">
+        <div class="warn-emblem" aria-hidden="true">⏱</div>
+        <h3 id="warnTitle" style="text-align:center; margin: 8px 0 4px;">Noch <span id="warnMinutes">5</span> Minuten</h3>
+        <p style="text-align:center; color: var(--ink-2); margin: 0;">
+          Deine Tour läuft bald ab. Möchtest du die Zeit verlängern?
+        </p>
+      </div>
+      <div class="modal-cta">
+        <button class="cta-btn muted" data-warn-close type="button">Später</button>
+        <button class="cta-btn" id="warnExtend" type="button">Zeit verlängern</button>
+      </div>
+    </article>
+  </div>
+
   <!-- Überlaufmenü -->
   <div class="menu-sheet" id="menuSheet" hidden>
     <div class="modal-backdrop" data-menu-close></div>
